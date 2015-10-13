@@ -1,0 +1,93 @@
+%&latex
+\documentclass{article}
+\usepackage{commons/commons}
+\usepackage{commons/note_style}
+
+\usepackage{amssymb}
+
+\def\ojoin{\setbox0=\hbox{$\bowtie$}%
+  \rule[-.02ex]{.25em}{.4pt}\llap{\rule[\ht0]{.25em}{.4pt}}}
+\def\leftouterjoin{\mathbin{\ojoin\mkern-5.8mu\bowtie}}
+\def\rightouterjoin{\mathbin{\bowtie\mkern-5.8mu\ojoin}}
+\def\fullouterjoin{\mathbin{\ojoin\mkern-5.8mu\bowtie\mkern-5.8mu\ojoin}}
+
+\begin{document}
+
+%+Title
+\title{CSE 232A Database}
+\author{Daniel D. Zhang}
+\date{Fall 2015}
+\maketitle
+%-Title
+
+%+Abstract
+%\begin{abstract}
+%This is the notes for CSE 232A.
+%\end{abstract}
+%-Abstract
+\newcommand{\ra}{\rightarrow}
+\newcommand{\Ra}{\Rightarrow}
+
+
+%+Contents
+\tableofcontents
+%-Contents
+\section{Query Processing}
+Notations:
+\begin{enumerate}
+\item $\sigma$: Filter, WHERE (conditions)
+\item $\times$: Cartesian, FROM product 
+\item $\Pi$: Projection, SELECT (attributes)
+\item $x\ra y$: Rename $x$ to $y$. Scalar func: $a+b\ra y$, String ops: $c||d \ra y$
+
+Scalar functions: their input comes from the same tuple (as opp. aggregate)
+$$
+\Pi_{x, y\ra z, x+y\ra w} R
+$$
+$PLUS_{x, y\ra z}$, $CONCAT_{x,y\ra z}$
+\item $\bowtie$: Natural join: $R\bowtiewS = \Pi_A\sigma_C(R\times S)$. Notice that the $\times$ is bag version. 
+\item $\bowtie_{\theta}$: $\triangleq \sigma_{\theta} (R\times S)$. $\theta$ is a condition. 
+\end{enumerate}
+\subsection{Query Plan}
+A simple SFW (Select From Where). 
+\begin{enumerate}
+\item Naive plan:
+$$
+\Pi_{attr_1,attr_2}^{FLY}\Big[\sigma_{cond_1\wedge cond_2}^{FLY} (R^{SCAN}\times S^{SCAN})\Big]
+$$
+
+FLY and SCAN are how exactly the plan is run. 
+
+\item Join Plan:
+$$
+\Pi \Big[(\sigma_{cond_1}R)  \bowtie^{HASH} (\sigma_{cond_2}S) \Big]
+$$
+\item Index plan:
+TODO
+$$
+
+$$
+
+Nested SQL algebra:
+TODO
+\end{enumerate}
+
+\subsection{Bag}
+\begin{enumerate}
+\item Algebraic Operators (Bag Version)
+$$
+R\cup S
+$$
+\item Convert to set (DISTINCT)
+$$
+\delta(R)
+$$
+\end{enumerate}
+
+%+Bibliography
+\begin{thebibliography}{99}
+\bibitem{Label1} ...
+\bibitem{Label2} ...
+\end{thebibliography}
+%-Bibliography
+\end{document}
