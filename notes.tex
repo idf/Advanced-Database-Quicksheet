@@ -25,9 +25,6 @@
 %This is the notes for CSE 232A.
 %\end{abstract}
 %-Abstract
-\newcommand{\ra}{\rightarrow}
-\newcommand{\Ra}{\Rightarrow}
-
 
 %+Contents
 \tableofcontents
@@ -45,7 +42,7 @@ $$
 \Pi_{x, y\ra z, x+y\ra w} R
 $$
 $PLUS_{x, y\ra z}$, $CONCAT_{x,y\ra z}$
-\item $\bowtie$: Natural join: $R\bowtiewS = \Pi_A\sigma_C(R\times S)$. Notice that the $\times$ is bag version. 
+\item $\bowtie$: Natural join: $R\bowtiewS = \Pi_A\sigma_C(R\times S)$. Notice that the $\times$ is \textbf{bag} version. 
 \item $\bowtie_{\theta}$: $\triangleq \sigma_{\theta} (R\times S)$. $\theta$ is a condition. 
 \end{enumerate}
 \subsection{Query Plan}
@@ -60,17 +57,20 @@ FLY and SCAN are how exactly the plan is run.
 
 \item Join Plan:
 $$
-\Pi \Big[(\sigma_{cond_1}R)  \bowtie^{HASH} (\sigma_{cond_2}S) \Big]
+\Pi_{attrs} \Big[(\sigma_{cond_1}R)  \bowtie^{HASH} (\sigma_{cond_2}S) \Big]
 $$
 \item Index plan:
-TODO
-$$
 
 $$
+\Pi_{attrs}\sigma_{cond_2}(\sigma_{cond_1}^{INDEX} \bowtie^{RI} S)
+$$
+$\bowtie^{RI}$ Right Index Join. 
 
-Nested SQL algebra:
-TODO
 \end{enumerate}
+Complex
+\begin{itemize}
+\item Nested SQL algebra: see notes for rewriting. Essentially, convert nested SQL to JOIN.
+\end{itemize}
 
 \subsection{Bag}
 \begin{enumerate}
