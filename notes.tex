@@ -3,6 +3,8 @@
 \usepackage{commons/commons}
 \usepackage{commons/note_style}
 
+\usepackage{comment}
+%\excludecomment{figure}
 
 \def\ojoin{\setbox0=\hbox{$\bowtie$}%
   \rule[-.02ex]{.25em}{.4pt}\llap{\rule[\ht0]{.25em}{.4pt}}}
@@ -10,6 +12,7 @@
 \def\rightouterjoin{\mathbin{\bowtie\mkern-5.8mu\ojoin}}
 \def\fullouterjoin{\mathbin{\ojoin\mkern-5.8mu\bowtie\mkern-5.8mu\ojoin}}
 \usepackage{amsbsy}
+\usepackage{amstext}
 
 \begin{document}
 
@@ -31,6 +34,17 @@
 %-Contents
 \newpage
 
+\section*{Preclude}
+\begin{itemize}
+\item \textbf{NULL}: NULL means absence of value. Any value \textbf{cannot} ever be $=$ (or $<>$) NULL because NULL has no value. However, SQL has special IS NULL and IS NOT NULL predicates for dealing with NULL.
+\end{itemize}
+\section*{Acronyms}
+\
+\begin{obeylines}
+\rih{Attr}. Attributes 
+\rih{Ptr}. Pointer
+\rih{Mgt}. Management 
+\end{obeylines}
 \section{Introduction}
 \begin{itemize}
 \item Basic SQLs 
@@ -77,17 +91,80 @@ $$
 
 
 \section{Indexing}
-\subsection{Merge Plan}
-TODO
+\subsection{Conventional indexes}
+\begin{enumerate}
+\item Basic index types
+  \begin{enumerate}
+  \item Primary index
+  \item Secondary index
+  \end{enumerate}
+  \begin{enumerate}
+  \item Dense Index
+  \item Spare Index
+  \end{enumerate}
+\item Multi-level indexes
+\item Operations on conventional index
+  \begin{enumerate}
+  \item Duplication
+  \item Deletion
+  \item Insertion
+  \end{enumerate}
+\item Secondary Indexes
+  \begin{enumerate}
+  \item Non-sequencing \& multi-level
+  \item Duplicate values
+  
+  Solutions:
+    \begin{enumerate}
+    \item Multiple index ptrs
+    \item variable size of index list 
+    \item chaining records 
+    \item bucket (most used)
+    \end{enumerate}
+  \end{enumerate}
+\end{enumerate}
 \subsection{B+Tree}
+\subsubsection{Bascis}
 \begin{tabular}{lll}
 \hline\noalign{\smallskip}
 \textbf{Attrs} & \textbf{Non-leaf} & \textbf{Leaf} \\
 \noalign{\smallskip}\hline\noalign{\smallskip}
 Ptrs & \lceil\frac{n+1}{2}\rceil & \lfloor\frac{n+1}{2}\rfloor \\
-\noalign{\smallskip}\hline\noalign{\
+\noalign{\smallskip}\hline\noalign{
 \caption{Nodes at least half-full}
 \end{tabular}
+\subsubsection{Operations}
+Core clues
+\begin{enumerate}
+\item \textbf{Split \& Up}: split half, move up the RIGHT node's FIRST of split nodes recursively
+\item The node moved up should be removed in the original node UNLESS it is a leaf node. 
+\end{enumerate}
+
+\subsection{Hash}
+\subsubsection{Extensible hashing}
+Core clues:
+\begin{enumerate}
+\item Number of bit used $i$: $hash[:i]$.
+\item When overflow:
+  \begin{enumerate}
+  \item \textbf{Expand} the index $i=i+1$.
+  \item \textbf{Split} the bucket. Reorganized the split bucket according to new $i$.
+  \item \textbf{Untouched} buckets remain untouched. 
+  \end{enumerate}
+\end{enumerate}
+\begin{figure}[H]
+        \centerline{\includegraphics[height = 2in]{img/extensible_hashing}}
+        \caption{Piazza}
+    \label{fig:extensibleHashing}
+\end{figure}
+\subsection{BitMap}
+Core clues:
+\begin{enumerate}
+\item gap count of 0's between 1's
+\item encode length information [1]*(i-1)+[0], where i is number of bit for the gap count.
+\item checksum: len info and gap count are of same size
+\end{enumerate}
+
 
 \section{Query Processing}
 \subsection{Basic query processing}
@@ -104,7 +181,7 @@ $$
 \Pi_{x, y\ra z, x+y\ra w} R
 $$
 Alternatively, $PLUS_{x, y\ra z}$; similarly $CONCAT, MULT, CONCAT}$
-\item $\bowtie$: Natural join: $R\bowtiewS = \Pi_{distinctAttrs}\sigma_{condOnBoth}(R\times S)$. Notice that the $\times$ is \textbf{bag} version. 
+\item $\bowtie$: Natural join: $R\bowtie S = \Pi_{distinctAttrs}\sigma_{condOnBoth}(R\times S)$. Notice that the $\times$ is \textbf{bag} version. 
 
 $\bowtie_{\theta}$: $\triangleq \sigma_{\theta} (R\times S)$. $\theta$ is a condition. \item $\gamma$: Group and aggregation
 
@@ -141,8 +218,8 @@ $$
 
 FLY and SCAN are how exactly the plan is run.
 \begin{enumerate}
-\item \textbf{FLY}: on the fly, one by one.
-\item \textbf{SCAN}: scan and load the tables.
+\item \textbf{FLY}: on the fly, one entry at a time. Implementation: Iterator. No intermediate storage 
+\item \textbf{SCAN}: scan the tables, one block at a time.
 \begin{enumerate}
 \item \textbf{Table-scan}. operator simply reads each block holding tuples of the relation.
 \item \textbf{Index-scan}. uses an index to find tuples
@@ -240,7 +317,7 @@ proof: $R\times S = S\times R$
 Decomposition of Negation:
 TODO
 
-\item \rih{Push down} !important
+\item \rih{Push $\sigma$} !important
 $$
 \sigma_{cond}(RoL) = (\sigma_{cond} R) o (\sigma_{cond} L) 
 $$
@@ -259,14 +336,37 @@ proof: $\sigma_{A=2}(R\bowtie S) = (\sigma_{A=2}R)\bowtie S$, given commutativit
 \rih{Combine $\pi$ \& $\sigma$}
 
 This is a technique of proof by using axioms. 
+
+\item \rih{Push $\pi$} 
+
+\begin{align*}
+& \pi_x (R \cup S) = \pi_x R \cup \pi_x S \\
+& \pi_a (R \times S) = \pi_a (\pi_{cond1 \supset a}R \times \pi_{cond2 \supset a} S) \\
+& \pi_a (R \bowtie S) = \pi_a(\pi_{cond1 \supset a \cup R.c}\ R \bowtie \pi_{cond2 \supset a\cup S.c}\ S) \\
+& \pi_x R = \pi_x \pi_{y\supset x} R
+\end{align*}
+When denoting $\supset, \subset$, it is for AND composite. $cond1\supset a$ is a shorthand notation for $\{cond1|cond1 \supset a\}$
+
+\item \rih{Aggregation} 
+
+\begin{align*}
+& \sigma_{cond\subset grpAttrs} \Sigma_{grpAttrs; attr\ra attr'} R = \Sigma_{grpAttrs, attr\ra attr'} \sigma_{cond\subset grpAttrs} R \\
+& \Sigma_{GL;GA\ra RA} (R \cup S) = +_{RA1, RA2:RA} (\Sigma_{GL; GA\ra RA1 }R \bowtie \Sigma_{GL; GA\ra RA2} S)\\
+& \Sigma_{GL2; RA1 \ra RA2} \Sigma_{GL1; GA \ra RA1} R = \Sigma_{GL2; GA\ra RA2} R
+\end{align*}
+Notation, in slides it is $grpList$ or $GL$ as $grpAttrs$; $SUM$ as $\Sigma$.
+\item \rih{Cost, rule of thumb} 
+
 \end{enumerate}
-\section*{Acronyms}
-\
-\begin{obeylines}
-\rih{Attr}. Attributes 
-\rih{Ptr}. Pointer
-\rih{Mgt}. Management 
-\end{obeylines}
+\subsection{Algorithms for Relational Algebra Operators}
+\subsubsection{$\bowtie$}
+\begin{enumerate}
+\item Iteration join
+\item Merge join 
+\item Index join 
+\item Hash join 
+\end{enumerate}
+
 
 
 %+Bibliography
