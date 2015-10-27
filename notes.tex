@@ -44,6 +44,8 @@
 \rih{Attr}. Attributes 
 \rih{Ptr}. Pointer
 \rih{Mgt}. Management 
+\rih{idx}. Access key to array, that is array index; but it is not the database index.
+
 \end{obeylines}
 \section{Introduction}
 \begin{itemize}
@@ -62,8 +64,8 @@ the event of power loss, crashes, or
 \item Database System Architecture. Fig:
 \begin{figure}[hbtp]
 \centering
-\subfloat{\includegraphics[height=2.5in]{img/db_sys_arch}}
-\caption{CAPTION}
+\subfloat{\includegraphics[height=2.2in]{img/db_sys_arch}}
+\caption{Database System Architecture}
 \label{fig:LABEL}
 \end{figure}
 \end{itemize}
@@ -85,7 +87,16 @@ Upper data size:
 $$
 \frac{M^2}{B}
 $$
-, where $M\trieq$ RAM size, $B\trieq$ block size. 
+, where $M\trieq$ RAM byte size, $B\trieq$ block byte size. 
+
+core clues, TODO
+
+Block I/O cost:
+\begin{enumerate}
+\item phase 1: B(R) read + B(R) write 
+\item phase 2: B(R) read + B(R) write 
+\end{enumerate}
+, where B(X) is the number of block. 
 \end{enumerate}
 \end{itemize}
 
@@ -137,7 +148,7 @@ Ptrs & \lceil\frac{n+1}{2}\rceil & \lfloor\frac{n+1}{2}\rfloor \\
 Core clues
 \begin{enumerate}
 \item \textbf{Split \& Up}: split half, move up the RIGHT node's FIRST of split nodes recursively
-\item The node moved up should be removed in the original node UNLESS it is a leaf node. 
+\item \textbf{Delete}: the node moved up should be removed in the original node UNLESS it is a leaf node. 
 \end{enumerate}
 
 \subsection{Hash}
@@ -157,13 +168,63 @@ Core clues:
         \caption{Piazza}
     \label{fig:extensibleHashing}
 \end{figure}
+\subsubsection{Linear Hashing}
+\begin{figure}[H]
+        \centerline{\includegraphics[height = 1in]{img/linearhashing}}
+        \caption{Linear Hashing}
+    \label{fig:linearHashing}
+\end{figure}
+Definitions:
+\begin{itemize}
+\item $m \triangleq a_1a_2...a_i$, the $i$ lower bits of $H(K)$ intended for hashing,
+\item $n$ number of buckets; doesn't count overflow block. 
+\item $r$ number of records
+\item $\tau$ threshold for $\frac{r}{n}$, normally 1.7 
+\end{itemize}
+Insert: 
+\begin{itemize}
+\item if $m<n$, insert at $m$-th bucket.
+\item if $n\leq m < 2^i$, insert at $0a_2...a_i$-th bucket, (unset the highest bit of $m$).
+\item if designated bucket full, append overflow block. 
+\end{itemize}
+Expand:
+\begin{itemize}
+\item if $\frac{r}{n}>\tau$, add bucket $\wedge$ if the bucekt idx is like $1...$, split the corresponding $0...$ bucket. 
+\item if $n>2^i$, inc $i$. Bucket idx remain unchanged. 
+\end{itemize}
+
 \subsection{BitMap}
+\begin{figure}[H]
+\centering
+\subfloat{\includegraphics[scale=.80]{img/bitmap}}
+\caption{Bitmap}
+\label{fig:LABEL}
+\end{figure}
 Core clues:
 \begin{enumerate}
-\item gap count of 0's between 1's
-\item encode length information [1]*(i-1)+[0], where i is number of bit for the gap count.
-\item checksum: len info and gap count are of same size
+\item Gap count of 0's between 1's
+\item Lncode length information [1]*(i-1)+[0], where i is number of bit for the gap count.
+\item Checksum: len info and gap count are of same size
 \end{enumerate}
+Complexity: 
+\begin{align*}
+& \sim m \frac{n}{m} 2\log\Big(n/\frac{n}{m} \Big) \\
+& \sim n \cdot 2\log m 
+\end{align*}
+Derivations:
+\begin{itemize}
+\item $n = T(R)$, $m = V(R, A)$
+\item Assume 1's evenly distributed 
+\item $\frac{n}{m}$ 1's for each bitmap (i.e. $\frac{\#1's}{unc\ bitmap}$).
+\item For an unc bitmap: n-bit length with $\frac{n}{m}$ 1's; $\ra$ run is $\frac{n}{n/m}=m$, (precisely should consider the space taken by 1's)
+\item For a comp bitmap: $\frac{n}{m}$ 1's with each run $m$, thus encoding length : $\frac{n}{m} 2 \log m$
+\item Thus, in total: $m \cdot \frac{n}{m} \cdot 2 \log{m} = 2n\log m$
+\end{itemize}
+
+To summarize: 
+$$
+\#bitmaps \cdot \#1's\in bitmap_i \cdot 2\log\Big(\overline{gapLen\in 0's}\Big)
+$$
 
 
 \section{Query Processing}
@@ -172,7 +233,7 @@ Core clues:
 Notations:
 \begin{enumerate}
 \item $\sigma$: Filter, WHERE (conditions)
-\item $\times$: Cartesian, FROM product 
+\item $\times$: Cartesian product, FROM product. It does not de-dup columns.  
 \item $\Pi$: Projection, SELECT (attributes)
 \item $x\ra y$: Extended projection, rename $x$ to $y$. Scalar func: $a+b\ra y$, String ops: $c||d \ra y$
 
@@ -181,9 +242,10 @@ $$
 \Pi_{x, y\ra z, x+y\ra w} R
 $$
 Alternatively, $PLUS_{x, y\ra z}$; similarly $CONCAT, MULT, CONCAT}$
-\item $\bowtie$: Natural join: $R\bowtie S = \Pi_{distinctAttrs}\sigma_{condOnBoth}(R\times S)$. Notice that the $\times$ is \textbf{bag} version. 
+\item $\bowtie$: Natural join: $R\bowtie S = \Pi_{distinctAttrs}\sigma_{condOnBoth}(R\times S)$. Notice that the $\times$ is \textbf{bag} version; and $\bowtie$ de-dups columns. The results $LHS\equiv RHS$, but the query plans of $LHS, RHS$ may be different. 
 
-$\bowtie_{\theta}$: $\triangleq \sigma_{\theta} (R\times S)$. $\theta$ is a condition. \item $\gamma$: Group and aggregation
+\item $\bowtie_{\theta}$: $= \sigma_{\theta} (R\times S)$. $\theta$ is a condition. Notice that, $\bowtie_\theta$ is \textit{not} the $\theta$ version of natural join, but the $\theta$ version of Cartesian product. It does \textit{not} de-dup columns. 
+\item $\gamma$: Group and aggregation
 
 \textbf{Aggregate} functions. 
 $$
@@ -239,11 +301,15 @@ $$
 $$
 $\bowtie^{RI}$ Right Index Join. 
 Steps:
-\begin{enumerate}
-\item Use index to get $\sigma$ based on condition on $R$. 
-\item Right join $S$.
-\item Filter based on condition on $S$.
-\end{enumerate}
+\begin{itemize}
+\item $\sigma$ uses index to get tuples based on condition on $R$. 
+\item $\bowtie^{RI}$. For each tuple in the result $R$:
+\begin{itemize}
+\item Match $S$'s tuple using $S$'s index, in $O(1)$. 
+\end{itemize}
+\item $\sigma$ filters $S$ based on condition on $S$.
+\item $\Pi_{attrs}$ ...
+\end{itemize}
 \end{enumerate}
 \subsection{From query to optimal plan}
 \begin{enumerate}
@@ -286,6 +352,7 @@ $$
 \item Extended relational algebra - Section \ref{rlsAlgebra}.
 \end{enumerate}
 \subsection{Relational algebra optimization}
+\subsubsection{Rewriting}
 \begin{enumerate}
 \item \rih{Commutativity and Associativity}
 \begin{align*}
@@ -358,14 +425,38 @@ Notation, in slides it is $grpList$ or $GL$ as $grpAttrs$; $SUM$ as $\Sigma$.
 \item \rih{Cost, rule of thumb} 
 
 \end{enumerate}
+\subsubsection{Proof/Disproof the equivalence of rewriting}
+The \note{breakthrough} points: 
+\begin{enumerate}
+\item $\phi$ table
+\item NULL column. 
+\end{enumerate}
+
+
+
 \subsection{Algorithms for Relational Algebra Operators}
-\subsubsection{$\bowtie$}
+\subsubsection{Implementations of $\bowtie$}
 \begin{enumerate}
 \item Iteration join
 \item Merge join 
 \item Index join 
 \item Hash join 
 \end{enumerate}
+\subsubsection{Cost analysis}
+\begin{itemize}
+\item Notations
+\begin{enumerate}
+\item T(R) : #tuples in R
+\item S(R) : #bytes (size) in each R tuple
+\item B(R): #blocks to hold all R tuples 
+\item V(R, A) : #distinct values in R for attribute A
+\end{enumerate}
+\item Corner case 
+$$
+V(R_1\times R_2) \approx V(R_1, A)
+$$
+Corner case: $R_2=\phi$, then RHS should be 0. But, in size estimation, doesn't consider the corner case. Normally, only the average case (uniform distr.) is considered. 
+\end{itemize}
 
 
 
