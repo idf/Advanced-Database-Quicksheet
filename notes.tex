@@ -386,7 +386,7 @@ TODO
 
 \item \rih{Push $\sigma$} !important
 $$
-\sigma_{cond}(RoL) = (\sigma_{cond} R) o (\sigma_{cond} L) 
+\sigma_{cond}(R\ o\ L) = (\sigma_{cond} R)\ o\ (\sigma_{cond} L) 
 $$
 \begin{flushright}, where $o\in \{-, \cup, \times, \bowtie\}$. \end{flushright}
 
@@ -435,7 +435,8 @@ The \note{breakthrough} points:
 
 
 \subsection{Algorithms for Relational Algebra Operators}
-\subsubsection{Implementations of $\bowtie$}
+\subsubsection{Query Execution}
+\rih{Implementations of $\bowtie$}
 \begin{enumerate}
 \item Iteration join
 \item Merge join 
@@ -443,7 +444,13 @@ The \note{breakthrough} points:
 \item Hash join 
 \end{enumerate}
 \subsubsection{Cost analysis}
+\rih{Intro}
 \begin{itemize}
+\item Two aspects of cost analysis:
+\begin{enumerate}
+\item Size of the intermediate result 
+\item Number of I/Os.
+\end{enumerate}
 \item Notations
 \begin{enumerate}
 \item T(R) : #tuples in R
@@ -457,8 +464,28 @@ V(R_1\times R_2) \approx V(R_1, A)
 $$
 Corner case: $R_2=\phi$, then RHS should be 0. But, in size estimation, doesn't consider the corner case. Normally, only the average case (uniform distr.) is considered. 
 \end{itemize}
+\rih{Estimate for $\bowtie$}
+\begin{itemize}
+\item \textbraceleft PK, FK\textbraceright\ relationship $R_1\bowtie R_2$
 
+One way PK, FK for $R_1, R_2$: 
+$$
+T(W) = \frac{T(R_1)}{V(R_1, A)} T(R_2)
+$$
 
+Generalized to symmetry: 
+$$
+T(W) = \frac{T(R_1)T(R_2)}{\max\{V(R_1, A), V(R_2, A)\}}
+$$
+\end{itemize}
+\rih{Subexpressions \& Value preservation}
+
+A probability approach. The combination should not change the a $V$'s prob distr. since assumped indpt.
+\begin{itemize}
+\item Value preservation for the pushing down of $\sigma$. 
+\item Value preservation for the composite $\bowtie$. 
+\end{itemize}
+\subsubsection{Plan Enumeration}
 
 %+Bibliography
 \begin{thebibliography}{99}
