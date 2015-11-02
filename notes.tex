@@ -1,9 +1,13 @@
 %&latex
-\documentclass{article}
+\documentclass[a4paper]{report}
 \usepackage{commons/commons}
 \usepackage{commons/note_style}
 
 \usepackage{comment}
+\usepackage{titlesec}
+\titleformat{\chapter}[display]
+  {\normalfont\sffamily\big\bfseries\color{black}}
+  {\chaptertitlename\ \thechapter}{5pt}{\huge}
 %\excludecomment{figure}
 
 \def\ojoin{\setbox0=\hbox{$\bowtie$}%
@@ -32,8 +36,7 @@
 %+Contents
 \tableofcontents
 %-Contents
-\newpage
-
+\chapter*{Preface}
 \section*{Preclude}
 \begin{itemize}
 \item \textbf{NULL}: NULL means absence of value. Any value \textbf{cannot} ever be $=$ (or $<>$) NULL because NULL has no value. However, SQL has special IS NULL and IS NOT NULL predicates for dealing with NULL.
@@ -47,7 +50,7 @@
 \rih{idx}. Access key to array, that is array index; but it is not the database index.
 
 \end{obeylines}
-\section{Introduction}
+\chapter{Introduction}
 \begin{itemize}
 \item Basic SQLs 
 \item \rih{ACID}: Atomicity, Consistency, Isolation, Durability 
@@ -71,7 +74,7 @@ the event of power loss, crashes, or
 \end{itemize}
 
 
-\section{Hardware}
+\chapter{Hardware}
 \begin{itemize}
 \item Memory Hierarchy 
 \begin{enumerate}
@@ -101,13 +104,18 @@ Block I/O cost:
 \end{itemize}
 
 
-\section{Indexing}
-\subsection{Conventional indexes}
+\chapter{Indexing}
+\section{Conventional indexes}
 \begin{enumerate}
 \item Basic index types
   \begin{enumerate}
   \item Primary index
-  \item Secondary index
+  \item Secondary index. 
+
+  Notice the order of index: $i+1, i$ level of indexes. Secondary is meaningless to have a dense index. 
+  
+  
+  
   \end{enumerate}
   \begin{enumerate}
   \item Dense Index
@@ -134,8 +142,8 @@ Block I/O cost:
     \end{enumerate}
   \end{enumerate}
 \end{enumerate}
-\subsection{B+Tree}
-\subsubsection{Bascis}
+\section{B+Tree}
+\subsection{Bascis}
 \begin{tabular}{lll}
 \hline\noalign{\smallskip}
 \textbf{Attrs} & \textbf{Non-leaf} & \textbf{Leaf} \\
@@ -144,15 +152,15 @@ Ptrs & \lceil\frac{n+1}{2}\rceil & \lfloor\frac{n+1}{2}\rfloor \\
 \noalign{\smallskip}\hline\noalign{
 \caption{Nodes at least half-full}
 \end{tabular}
-\subsubsection{Operations}
+\subsection{Operations}
 Core clues
 \begin{enumerate}
 \item \textbf{Split \& Up}: split half, move up the RIGHT node's FIRST of split nodes recursively
 \item \textbf{Delete}: the node moved up should be removed in the original node UNLESS it is a leaf node. 
 \end{enumerate}
 
-\subsection{Hash}
-\subsubsection{Extensible hashing}
+\section{Hash}
+\subsection{Extensible hashing}
 Core clues:
 \begin{enumerate}
 \item Number of bit used $i$: $hash[:i]$.
@@ -168,7 +176,7 @@ Core clues:
         \caption{Piazza}
     \label{fig:extensibleHashing}
 \end{figure}
-\subsubsection{Linear Hashing}
+\subsection{Linear Hashing}
 \begin{figure}[H]
         \centerline{\includegraphics[height = 1in]{img/linearhashing}}
         \caption{Linear Hashing}
@@ -193,7 +201,7 @@ Expand:
 \item if $n>2^i$, inc $i$. Bucket idx remain unchanged. 
 \end{itemize}
 
-\subsection{BitMap}
+\section{BitMap}
 \begin{figure}[H]
 \centering
 \subfloat{\includegraphics[scale=.80]{img/bitmap}}
@@ -227,9 +235,9 @@ $$
 $$
 
 
-\section{Query Processing}
-\subsection{Basic query processing}
-\subsubsection{Relational algebra}\label{rlsAlgebra}
+\chapter{Query Processing}
+\section{Basic query processing}
+\subsection{Relational algebra}\label{rlsAlgebra}
 Notations:
 \begin{enumerate}
 \item $\sigma$: Filter, WHERE (conditions)
@@ -270,7 +278,7 @@ $$
 $$
 \begin{flushright}, produces a bag but preserves the order.\end{flushright} 
 \end{enumerate}
-\subsubsection{Query Plan}
+\subsection{Query Plan}
 A simple SFW (Select From Where). 
 \begin{enumerate}
 \item Naive plan p:
@@ -311,7 +319,7 @@ Steps:
 \item $\Pi_{attrs}$ ...
 \end{itemize}
 \end{enumerate}
-\subsection{From query to optimal plan}
+\section{From query to optimal plan}
 \begin{enumerate}
 \item \textbf{lqp}. logical query plan $\equiv$ algebra ops 
 \item Algebraic rewritings to transform the lqp
@@ -338,7 +346,7 @@ $$
 
 \end{itemize}
 \end{enumerate}
-\subsection{Bag algebra, list algebra, and extensions}
+\section{Bag algebra, list algebra, and extensions}
 In this nodes, bag-version operations are assumed. 
 \begin{enumerate}
 \item Algebraic Operators (Bag Version) $\cup, \cap$
@@ -351,8 +359,8 @@ $$
 $$
 \item Extended relational algebra - Section \ref{rlsAlgebra}.
 \end{enumerate}
-\subsection{Relational algebra optimization}
-\subsubsection{Rewriting}
+\section{Relational algebra optimization}
+\subsection{Rewriting}
 \begin{enumerate}
 \item \rih{Commutativity and Associativity}
 \begin{align*}
@@ -384,7 +392,7 @@ proof: $R\times S = S\times R$
 Decomposition of Negation:
 TODO
 
-\item \rih{Push $\sigma$} !important
+\item \rih{Push down $\sigma$} !important
 $$
 \sigma_{cond}(R\ o\ L) = (\sigma_{cond} R)\ o\ (\sigma_{cond} L) 
 $$
@@ -404,8 +412,9 @@ proof: $\sigma_{A=2}(R\bowtie S) = (\sigma_{A=2}R)\bowtie S$, given commutativit
 
 This is a technique of proof by using axioms. 
 
-\item \rih{Push $\pi$} 
+\item \rih{Push down $\pi$} 
 
+$\pi$ can reduce the length of a tuple; thus it is useful to push down $\pi$ to fit more tuples in memory. 
 \begin{align*}
 & \pi_x (R \cup S) = \pi_x R \cup \pi_x S \\
 & \pi_a (R \times S) = \pi_a (\pi_{cond1 \supset a}R \times \pi_{cond2 \supset a} S) \\
@@ -414,6 +423,7 @@ This is a technique of proof by using axioms.
 \end{align*}
 When denoting $\supset, \subset$, it is for AND composite. $cond1\supset a$ is a shorthand notation for $\{cond1|cond1 \supset a\}$
 
+\rih{Push down priority of $\pi, \sigma$}. Normally $\sigma$ is given higher priority than $\pi$ if $\sigma$ can do index selection to avoid $\pi$ on all tuples 
 \item \rih{Aggregation} 
 
 \begin{align*}
@@ -425,7 +435,7 @@ Notation, in slides it is $grpList$ or $GL$ as $grpAttrs$; $SUM$ as $\Sigma$.
 \item \rih{Cost, rule of thumb} 
 
 \end{enumerate}
-\subsubsection{Proof/Disproof the equivalence of rewriting}
+\subsection{Proof/Disproof the equivalence of rewriting}
 The \note{breakthrough} points: 
 \begin{enumerate}
 \item $\phi$ table
@@ -434,16 +444,18 @@ The \note{breakthrough} points:
 
 
 
-\subsection{Algorithms for Relational Algebra Operators}
-\subsubsection{Query Execution}
+\section{Algorithms for Relational Algebra Operators}
+\subsection{Query Execution}
 \rih{Implementations of $\bowtie$}
 \begin{enumerate}
 \item Iteration join
 \item Merge join 
 \item Index join 
+
+When no relation fits in memory, $\bowtie^{RI}$ outperforms any other technique. 
 \item Hash join 
 \end{enumerate}
-\subsubsection{Cost analysis}
+\subsection{Cost analysis}
 \rih{Intro}
 \begin{itemize}
 \item Two aspects of cost analysis:
@@ -485,7 +497,7 @@ A probability approach. The combination should not change the a $V$'s prob distr
 \item Value preservation for the pushing down of $\sigma$. 
 \item Value preservation for the composite $\bowtie$. 
 \end{itemize}
-\subsubsection{Plan Enumeration}
+\subsection{Plan Enumeration}
 
 %+Bibliography
 \begin{thebibliography}{99}
