@@ -17,13 +17,12 @@
 \def\fullouterjoin{\mathbin{\ojoin\mkern-5.8mu\bowtie\mkern-5.8mu\ojoin}}
 \usepackage{amsbsy}
 \usepackage{amstext}
-
 \begin{document}
 
 %+Title
 \title{Advanced Database Quicksheet}
 \author{Daniel D. Zhang}
-\date{Fall 2015}
+\date{Fall 2015. \today}
 \maketitle
 %-Title
 
@@ -90,7 +89,7 @@ Upper data size:
 $$
 \frac{M^2}{B}
 $$
-, where $M\trieq$ RAM byte size, $B\trieq$ block byte size. 
+, where $M\trieq$ RAM byte size, $B\trieq$ block byte size (rather than \#blocks).
 
 core clues, TODO
 
@@ -99,7 +98,7 @@ Block I/O cost:
 \item phase 1: B(R) read + B(R) write 
 \item phase 2: B(R) read + B(R) write 
 \end{enumerate}
-, where B(X) is the number of block. 
+, where B(x) is the number of block. 
 \end{enumerate}
 \end{itemize}
 
@@ -143,33 +142,44 @@ Block I/O cost:
   \end{enumerate}
 \end{enumerate}
 \section{B+Tree}
-\subsection{Bascis}
+\subsection{Basics}
+Root node can be any size. 
+
 \begin{tabular}{lll}
 \hline\noalign{\smallskip}
 \textbf{Attrs} & \textbf{Non-leaf} & \textbf{Leaf} \\
 \noalign{\smallskip}\hline\noalign{\smallskip}
 Ptrs & \lceil\frac{n+1}{2}\rceil & \lfloor\frac{n+1}{2}\rfloor \\
 \noalign{\smallskip}\hline\noalign{
-\caption{Nodes at least half-full}
+\caption{Non-root bodes at least half-full}
 \end{tabular}
+
+\begin{itemize}
+\item Follow the range convention of $[a, b)$.
+\item Left leaning convention 
+\end{itemize}
+
 \subsection{Operations}
 Core clues
 \begin{enumerate}
-\item \textbf{Split \& Up}: split half, move up the RIGHT node's FIRST of split nodes recursively
-\item \textbf{Delete}: the node moved up should be removed in the original node UNLESS it is a leaf node. 
+\item \textbf{Invariant}: children balanced or left-leaning
+\item \textbf{Split}: split half, thus invariant.
+\item \textbf{Leaf-Up}: no delete, recursively move up the right node's first child; thus invariant.
+\item \textbf{Nonleaf-Up}: delete and recursively move up the left's last if left-leaning or right's first if balanced; thus invariant. 
 \end{enumerate}
 
 \section{Hash}
 \subsection{Extensible hashing}
 Core clues:
 \begin{enumerate}
-\item Number of bit used $i$: $hash[:i]$.
+\item Number of \textit{higher} order bit used $i$: $hash[:i]$ - \textbf{110}001
 \item When overflow:
   \begin{enumerate}
   \item \textbf{Expand} the index $i=i+1$.
   \item \textbf{Split} the bucket. Reorganized the split bucket according to new $i$.
   \item \textbf{Untouched} buckets remain untouched. 
   \end{enumerate}
+\item Shorthand notation: 110 \framebox{3} K I
 \end{enumerate}
 \begin{figure}[H]
         \centerline{\includegraphics[height = 2in]{img/extensible_hashing}}
@@ -184,21 +194,21 @@ Core clues:
 \end{figure}
 Definitions:
 \begin{itemize}
-\item $m \triangleq a_1a_2...a_i$, the $i$ lower bits of $H(K)$ intended for hashing,
-\item $n$ number of buckets; doesn't count overflow block. 
+\item $m \triangleq a_1a_2...a_i$, the $i$ \textit{lower} bits of $H(K)$ intended for hashing - 110\textbf{001}
+\item $n$ number of buckets (blocks) currently using (max number); doesn't count overflow block. 
 \item $r$ number of records
-\item $\tau$ threshold for $\frac{r}{n}$, normally 1.7 
+\item $\tau$ threshold for $\frac{r}{n*cap}$, where $cap$ is the number of slots per block (textbook is $\frac{r}{n}$).
 \end{itemize}
 Insert: 
 \begin{itemize}
 \item if $m<n$, insert at $m$-th bucket.
-\item if $n\leq m < 2^i$, insert at $0a_2...a_i$-th bucket, (unset the highest bit of $m$).
+\item if $n\leq m < 2^i$, insert at $0a_2...a_i$-th bucket, (unset the \textit{highest} bit of usage bit $m$).
 \item if designated bucket full, append overflow block. 
 \end{itemize}
 Expand:
 \begin{itemize}
-\item if $\frac{r}{n}>\tau$, add bucket $\wedge$ if the bucekt idx is like $1...$, split the corresponding $0...$ bucket. 
-\item if $n>2^i$, inc $i$. Bucket idx remain unchanged. 
+\item if $\frac{r}{n*cap}>\tau$, inc $n$ $\wedge$ if the bucket idx is like $1.*$, split the corresponding $0...$ bucket. 
+\item if $n>2^i$, inc $i$. Bucket idx remain unchanged. ($i$ can be derived from $n$) 
 \end{itemize}
 
 \section{BitMap}
@@ -211,7 +221,7 @@ Expand:
 Core clues:
 \begin{enumerate}
 \item Gap count of 0's between 1's
-\item Lncode length information [1]*(i-1)+[0], where i is number of bit for the gap count.
+\item Encode length information [1]*(i-1)+[0], where i is number of bit for the gap count.
 \item Checksum: len info and gap count are of same size
 \end{enumerate}
 Complexity: 
@@ -240,7 +250,7 @@ $$
 \subsection{Relational algebra}\label{rlsAlgebra}
 Notations:
 \begin{enumerate}
-\item $\sigma$: Filter, WHERE (conditions)
+\item $\sigma$: Selection, WHERE (conditions). Selection does not preserver index.
 \item $\times$: Cartesian product, FROM product. It does not de-dup columns.  
 \item $\Pi$: Projection, SELECT (attributes)
 \item $x\ra y$: Extended projection, rename $x$ to $y$. Scalar func: $a+b\ra y$, String ops: $c||d \ra y$
@@ -267,14 +277,14 @@ A result $o(exp)$ is ordered if
 \item $o$ retains the originally ordered $exp$. (e.g. $\sigma$)
 \item $o$ creates ordering. (e.g. ordered by pk, then iterative joining implt with FLY)
 \end{enumerate}
-$\sigma$ may retain the order generated by $\tau$ but depends on implementation. e.g. $\sigma^{FLY}$ may prodeces a ordered result. Discussion: 
+$\sigma$ may retain the order generated by $\tau$ but depends on implementation. e.g. $\sigma^\text{FLY}$ may prodeces a ordered result. Discussion: 
 
 $$
-\tau_{R.A, R.B}\ \sigma_{R.B>5}^{FLY} R
+\tau_{R.A, R.B}\ \sigma_{R.B>5}^\text{FLY} R
 $$
 \begin{flushright}, produces a list\end{flushright}
 $$
-\sigma^{FLY}_{R.B>5}\ \tau_{R.A, R.B} R 
+\sigma^\text{FLY}_{R.B>5}\ \tau_{R.A, R.B} R 
 $$
 \begin{flushright}, produces a bag but preserves the order.\end{flushright} 
 \end{enumerate}
@@ -283,7 +293,7 @@ A simple SFW (Select From Where).
 \begin{enumerate}
 \item Naive plan p:
 $$
-\Pi_{attr_1,attr_2}^{FLY}\Big[\sigma_{cond_R\wedge cond_S\wedge cond_{RS}}^{FLY} (R^{SCAN}\times S^{SCAN})\Big]
+\Pi_{attr_1,attr_2}^\text{FLY}\Big[\sigma_{cond_R\wedge cond_S\wedge cond_{RS}}^\text{FLY} (R^\text{SCAN}\times S^\text{SCAN})\Big]
 $$
 
 FLY and SCAN are how exactly the plan is run.
@@ -300,18 +310,18 @@ FLY and SCAN are how exactly the plan is run.
 
 \item Join Plan (plan II):
 $$
-\Pi_{attrs} \Big[(\sigma_{cond_R}R)  \bowtie^{HASH} (\sigma_{cond_S}S) \Big]
+\Pi_{attrs} \Big[(\sigma_{cond_R}R)  \bowtie^\text{HASH} (\sigma_{cond_S}S) \Big]
 $$
 \item Index plan (plan III):
 
 $$
-\Pi_{attrs}\ \sigma_{cond_S}(\sigma_{cond_R}^{INDEX}R \bowtie^{RI} S)
+\Pi_{attrs}\ \sigma_{cond_S}(\sigma_{cond_R}^\text{INDEX}R \bowtie^\text{RI} S)
 $$
-$\bowtie^{RI}$ Right Index Join. 
+$\bowtie^\text{RI}$ Right Index Join. 
 Steps:
 \begin{itemize}
 \item $\sigma$ uses index to get tuples based on condition on $R$. 
-\item $\bowtie^{RI}$. For each tuple in the result $R$:
+\item $\bowtie^\text{RI}$. For each tuple in the result $R$:
 \begin{itemize}
 \item Match $S$'s tuple using $S$'s index, in $O(1)$. 
 \end{itemize}
@@ -335,7 +345,7 @@ FROM A WHERE A.v IN (
     WHERE cond_b
 );
 \end{lstlisting}
-$In$ is transformed into $\sigma (A\times B)$. Then the basic algebra is:
+IN is transformed into $\sigma (A\times B)$. Then the basic algebra is:
 $$
 \Pi_{A.a}\ \sigma_{A.v=B.v}\quad (A \times \Pi \sigma B)
 $$
@@ -368,7 +378,7 @@ R \cdot S &= S\cdot R \\
 R\cdot (S\cdot T) &= (R\cdot S) \cdot T \\
 \end{align}
 
-, where $o \in \{\times, \bowtie, \cup, \cap \}$  
+, where $\cdot \in \{\times, \bowtie, \cup, \cap \}$  
 
 proof: $R\times S = S\times R$
 \begin{align*}
@@ -381,7 +391,7 @@ proof: $R\times S = S\times R$
 & \therefore R \times S \subset S \times R \\
 & \mbox{vice versa...}
 \end{align*}
-\rih{Logics}
+\item \rih{Logics}
 \begin{align*}
 \sigma_{cond_1\wedge cond_2}R &= \sigma_{cond_1}\ \sigma_{cond_2}R \\
 \sigma_{cond_1\vee cond_2}R &= \sigma_{cond_1}R \cup \sigma_{cond_2}R
@@ -393,35 +403,40 @@ Decomposition of Negation:
 TODO
 
 \item \rih{Push down $\sigma$} !important
-$$
-\sigma_{cond}(R\ o\ L) = (\sigma_{cond} R)\ o\ (\sigma_{cond} L) 
-$$
-\begin{flushright}, where $o\in \{-, \cup, \times, \bowtie\}$. \end{flushright}
-
 \begin{itemize}
-\item For $\{-\}$, it can directly drop the $\sigma_{cond}L$ to $L$. 
+\item General
+$$
+\sigma_{cond}(R\cdot S) = (\sigma_{cond} R)\cdot (\sigma_{cond} S) 
+$$
+\begin{flushright}, where $\cdot\in \{-, \cup, \times, \bowtie\}$. \end{flushright}
+
+\item For $\{-\}$, it can directly drop the selection: $\sigma_{cond}S$ to $S$. 
+$$
+\sigma_{cond}(R-S) = (\sigma_{cond} R)-S
+$$
 \item For $\{\times, \bowtie\}$, it can further drops the $\sigma_{cond}T$ to $T$ if the condition does not refer to attributes in $T$.
+\begin{align*}
+\sigma_{cond}(R\cdot S) = R\cdot (\sigma_{cond} S) 
+\end{align*}
 \end{itemize}
 
 proof: $\sigma_{A=2}(R\bowtie S) = (\sigma_{A=2}R)\bowtie S$, given commutativity and $\sigma_{cond}(R\bowtie S) = R\bowtie \sigma_{cond}S$
 \begin{align*}
 \sigma_{A=2}(R\bowtie S) = \sigma_{A=2}(S\bowtie R) = S \bowtie (\sigma_{A=2}R)=(\sigma_{A=2}R\bowtie S)
 \end{align*}
+This is a technique of proof by using axioms. 
 
 \rih{Combine $\pi$ \& $\sigma$}
 
-This is a technique of proof by using axioms. 
-
 \item \rih{Push down $\pi$} 
-
-$\pi$ can reduce the length of a tuple; thus it is useful to push down $\pi$ to fit more tuples in memory. 
+ 
 \begin{align*}
 & \pi_x (R \cup S) = \pi_x R \cup \pi_x S \\
-& \pi_a (R \times S) = \pi_a (\pi_{cond1 \supset a}R \times \pi_{cond2 \supset a} S) \\
-& \pi_a (R \bowtie S) = \pi_a(\pi_{cond1 \supset a \cup R.c}\ R \bowtie \pi_{cond2 \supset a\cup S.c}\ S) \\
-& \pi_x R = \pi_x \pi_{y\supset x} R
+& \pi_a (R \times S) = \pi_a (\pi_{cond1 \supseteq a}R \times \pi_{cond2 \supseteq a} S) \\
+& \pi_a (R \bowtie S) = \pi_a(\pi_{cond1 \supseteq (a \cup R.c)}\ R \bowtie \pi_{cond2 \supseteq (a\cup S.c)}\ S) \\
+& \pi_x R = \pi_x \pi_{y\supseteq x} R
 \end{align*}
-When denoting $\supset, \subset$, it is for AND composite. $cond1\supset a$ is a shorthand notation for $\{cond1|cond1 \supset a\}$
+$\pi$ can reduce the length of a tuple; thus it is useful to push down $\pi$ to fit more tuples in memory. When denoting $\supset, \supseteq, \subset, \subseteq$, it is for AND composite. $cond1\supseteq a$ is a shorthand notation for $\{cond1|cond1 \supseteq a\}$, a notation for superset. 
 
 \rih{Push down priority of $\pi, \sigma$}. Normally $\sigma$ is given higher priority than $\pi$ if $\sigma$ can do index selection to avoid $\pi$ on all tuples 
 \item \rih{Aggregation} 
@@ -431,7 +446,7 @@ When denoting $\supset, \subset$, it is for AND composite. $cond1\supset a$ is a
 & \Sigma_{GL;GA\ra RA} (R \cup S) = +_{RA1, RA2:RA} (\Sigma_{GL; GA\ra RA1 }R \bowtie \Sigma_{GL; GA\ra RA2} S)\\
 & \Sigma_{GL2; RA1 \ra RA2} \Sigma_{GL1; GA \ra RA1} R = \Sigma_{GL2; GA\ra RA2} R
 \end{align*}
-Notation, in slides it is $grpList$ or $GL$ as $grpAttrs$; $SUM$ as $\Sigma$.
+Notation, in slides it is $grpList$ or $GL$ as $grpAttrs$; $SUM$ as $\Sigma$; $PLUS$ as +.
 \item \rih{Cost, rule of thumb} 
 
 \end{enumerate}
@@ -446,16 +461,73 @@ The \note{breakthrough} points:
 
 \section{Algorithms for Relational Algebra Operators}
 \subsection{Query Execution}
-\rih{Implementations of $\bowtie$}
+\subsubsection{Implementations of $\bowtie$}
+
+Notice:
+\begin{itemize}
+\item Write out of the join result at the end is not considered due to pipeline.
+\item Time of execution is measured by number of disk IO. 
+\end{itemize}
+
+
+
 \begin{enumerate}
-\item Iteration join
+\item Iteration join (one pass)
+
+\textbf{Requirement}. $\min(B(R), B(S)) < M$
+
+\textbf{Time}. Load a table to memory, and then loop join. Assumption $\min(B(R), B(S))<M$; thus
+$$B(R)+B(S)$$
 \item Merge join 
+
+\textbf{Process.} Two phases:
+\begin{enumerate}
+\item Sort-merge phase. \textbf{Mem} req: $|R|/M<M; |S|/M<M$
+\item Merge-join phase. \textbf{Mem} req: $|R|/M+|S|/M <M$
+\end{enumerate}
+Possible to combine the merge 
+
+\textbf{Time.} 1 read 1 write for the sort, 1 read to the merge; thus 
+\begin{align*}
+3B(R)+3B(S) &\\
+3B(R)+B(S) & \text{ if S is sorted on attr}
+\end{align*}
 \item Index join 
 
-When no relation fits in memory, $\bowtie^{RI}$ outperforms any other technique. 
+\textbf{Time.} when no relation fits in memory, $\bowtie^{RI}$ outperforms any other technique. It reads $B(R)$; for each $T(R)$, load $B(S)/V(S, B)$ blocks according to the index; thus 
+\begin{align*}
+B(R)+T(R)\cdot (1+\frac{B(S)}{V(S, B)}) &\text{ if R clustered}
+% \\ T(R)+T(R)\cdot (1+B(S)/V(S, B)) &\text{ if R not clustered}
+\end{align*}
+
+\begin{itemize}
+\item $1+...$, the 1 for \textit{index block access} to the non-cached leaf node of the B-tree index 
+\item Create index (normally already created): read blocks and write index $B(S)+B(index)$
+\end{itemize}
 \item Hash join 
+
+\textbf{Requirement.} $\min(B(R_{i}), B(S_{i}})) <M$. The smaller \textit{bucket} need to fit in mem when merge the bucket. 
+
+\textbf{Process.} Two phases
+\begin{enumerate}
+\item Hash every tuple into $M-1$ buckets $R_i, S_i$ (the remaining 1 for the temp working memory).
+\item Load either $R_i, S_i$ into mem, scan the other and join.
 \end{enumerate}
-\subsection{Cost analysis}
+\textbf{Time.} 1 read write R, S to create hashed buckets. 1 read to hash join; thus $$3B(R)+3B(S)$$
+\end{enumerate}
+
+\subsubsection{Analysis}
+\begin{enumerate}
+\item Results are \textit{pipelined}, thus not consider write the final result into disk. 
+\item \textit{Sorted} table does not need to sort in sort-merge on the sorted attr.
+\begin{enumerate}
+\item 1-pass on sorted table, result may also be sorted (depends).
+\item sort-merge will produce sorted result
+\end{enumerate}
+\item Intermediate results do not have index. 
+\item calculate time $\leftarrow$ calculate the \# disk I/O $\leftarrow$ \# blocks $B(R)$ $\leftarrow$ intermediate tuple size $T(R)$. 
+\end{enumerate}
+\subsection{Cost analysis (intermediate size)}
 \rih{Intro}
 \begin{itemize}
 \item Two aspects of cost analysis:
@@ -498,6 +570,8 @@ A probability approach. The combination should not change the a $V$'s prob distr
 \item Value preservation for the composite $\bowtie$. 
 \end{itemize}
 \subsection{Plan Enumeration}
+\subsubsection{Hypergraph}
+INGRES greedy heuristic search. 
 
 %+Bibliography
 \begin{thebibliography}{99}
