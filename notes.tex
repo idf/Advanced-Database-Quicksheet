@@ -47,6 +47,7 @@
 \rih{Ptr}. Pointer
 \rih{Mgt}. Management 
 \rih{idx}. Access key to array, that is array index; but it is not the database index.
+\rih{est}. Estimate. 
 
 \end{obeylines}
 \chapter{Introduction}
@@ -218,6 +219,8 @@ Expand:
 \caption{Bitmap}
 \label{fig:LABEL}
 \end{figure}
+Non-encoded bitmap vs. encoded bitmap. 
+\\
 Core clues:
 \begin{enumerate}
 \item Gap count of 0's between 1's
@@ -234,7 +237,7 @@ Derivations:
 \item $n = T(R)$, $m = V(R, A)$
 \item Assume 1's evenly distributed 
 \item $\frac{n}{m}$ 1's for each bitmap (i.e. $\frac{\#1's}{unc\ bitmap}$).
-\item For an unc bitmap: n-bit length with $\frac{n}{m}$ 1's; $\ra$ run is $\frac{n}{n/m}=m$, (precisely should consider the space taken by 1's)
+\item For an unc bitmap: n-bit length with $\frac{n}{m}$ 1's; $\ra$ run is $\frac{n}{n/m}=m$, (precisely should consider the space taken by 1's), assuming 1's are evenly distributed. $\frac{n}{n/m}$ is \#0's preceding each 1. 
 \item For a comp bitmap: $\frac{n}{m}$ 1's with each run $m$, thus encoding length : $\frac{n}{m} 2 \log m$
 \item Thus, in total: $m \cdot \frac{n}{m} \cdot 2 \log{m} = 2n\log m$
 \end{itemize}
@@ -255,7 +258,7 @@ Notations:
 \item $\Pi$: Projection, SELECT (attributes)
 \item $x\ra y$: Extended projection, rename $x$ to $y$. Scalar func: $a+b\ra y$, String ops: $c||d \ra y$
 
-\textbf{Scalar} functions: their input comes from the same tuple (as opp. \textbf{aggregate})
+\textbf{Scalar} functions: their input comes from the same tuple (as opp. \textbf{aggregate}). Notice that $\Pi_{x\ra y} R$ is to project R to x first and to apply the transformation. 
 $$
 \Pi_{x, y\ra z, x+y\ra w} R
 $$
@@ -396,8 +399,11 @@ proof: $R\times S = S\times R$
 \sigma_{cond_1\wedge cond_2}R &= \sigma_{cond_1}\ \sigma_{cond_2}R \\
 \sigma_{cond_1\vee cond_2}R &= \sigma_{cond_1}R \cup \sigma_{cond_2}R
 \end{align*}
-
 \begin{flushright}, notice that $\vee$ only applies for set-version\end{flushright}
+To apply $\vee$ to bag version: 
+\begin{align*}
+\sigma_{c_1} R \cup \sigma_{c_2} (R-\sigma_{c_1}R)
+\end{align*}
 
 Decomposition of Negation:
 TODO
@@ -438,6 +444,8 @@ This is a technique of proof by using axioms.
 \end{align*}
 $\pi$ can reduce the length of a tuple; thus it is useful to push down $\pi$ to fit more tuples in memory. When denoting $\supset, \supseteq, \subset, \subseteq$, it is for AND composite. $cond1\supseteq a$ is a shorthand notation for $\{cond1|cond1 \supseteq a\}$, a notation for superset. 
 
+\rih{Difference}. Notice that, $\pi_a (R-S) \neq \pi_a R - \pi_a S$ 
+
 \rih{Push down priority of $\pi, \sigma$}. Normally $\sigma$ is given higher priority than $\pi$ if $\sigma$ can do index selection to avoid $\pi$ on all tuples 
 \item \rih{Aggregation} 
 
@@ -455,6 +463,7 @@ The \note{breakthrough} points:
 \begin{enumerate}
 \item $\phi$ table
 \item NULL column. 
+\item Bag version duplicates
 \end{enumerate}
 
 
@@ -478,7 +487,7 @@ Notice:
 
 \textbf{Time}. Load a table to memory, and then loop join. Assumption $\min(B(R), B(S))<M$; thus
 $$B(R)+B(S)$$
-\item Merge join 
+\item $\bowtie^\text{SM}$ Merge join 
 
 \textbf{Process.} Two phases:
 \begin{enumerate}
@@ -488,23 +497,31 @@ $$B(R)+B(S)$$
 Possible to combine the merge 
 
 \textbf{Time.} 1 read 1 write for the sort, 1 read to the merge; thus 
-\begin{align*}
-3B(R)+3B(S) &\\
-3B(R)+B(S) & \text{ if S is sorted on attr}
-\end{align*}
-\item Index join 
+\begin{eqnarray*}
+time = \left\{ \begin{array}{rl}
+  3B(R)+3B(S) &\text{// if normal} \\
+  3B(R)+B(S) &\text{// if S sorted on attr} \\
+  2B(R)+2B(S) &\text{// if pipeline}\\
+  2B(R) &\text{// if pipeline and S sorted}
+       \end{array} \right.
+\end{eqnarray*}
+\item $\bowtie^\text{RI}, \bowtie^\text{INDEX}$ Index join 
+
+\textbf{Difference} btw RI and INDEX: $\bowtie^\text{RI}$ uses only 1 index; while $\bowtie^\text{INDEX}$ uses 2 indexes, thus it can process on indexes first (ptr), delaying the block access to data. 
 
 \textbf{Time.} when no relation fits in memory, $\bowtie^{RI}$ outperforms any other technique. It reads $B(R)$; for each $T(R)$, load $B(S)/V(S, B)$ blocks according to the index; thus 
-\begin{align*}
-B(R)+T(R)\cdot (1+\frac{B(S)}{V(S, B)}) &\text{ if R clustered}
-% \\ T(R)+T(R)\cdot (1+B(S)/V(S, B)) &\text{ if R not clustered}
-\end{align*}
+\begin{eqnarray*}
+time = \left\{ \begin{array}{rl}
+  B(R)+T(R)\cdot (1+\frac{B(S)}{V(S, B)}) &\text{// if normal} \\
+  T(R)\cdot (1+\frac{B(S)}{V(S, B)}) &\text{// if pipeline}\\
+       \end{array} \right.
+\end{eqnarray*}
 
 \begin{itemize}
 \item $1+...$, the 1 for \textit{index block access} to the non-cached leaf node of the B-tree index 
 \item Create index (normally already created): read blocks and write index $B(S)+B(index)$
 \end{itemize}
-\item Hash join 
+\item $\bowtie^\text{HASH}$ Hash join 
 
 \textbf{Requirement.} $\min(B(R_{i}), B(S_{i}})) <M$. The smaller \textit{bucket} need to fit in mem when merge the bucket. 
 
@@ -513,7 +530,13 @@ B(R)+T(R)\cdot (1+\frac{B(S)}{V(S, B)}) &\text{ if R clustered}
 \item Hash every tuple into $M-1$ buckets $R_i, S_i$ (the remaining 1 for the temp working memory).
 \item Load either $R_i, S_i$ into mem, scan the other and join.
 \end{enumerate}
-\textbf{Time.} 1 read write R, S to create hashed buckets. 1 read to hash join; thus $$3B(R)+3B(S)$$
+\textbf{Time.} 1 read write R, S to create hashed buckets. 1 read to hash join; thus 
+\begin{eqnarray*}
+time = \left\{ \begin{array}{rl}
+  3B(R)+3B(S) &\text{// if normal} \\
+  2B(R)+2B(S) &\text{// if pipeline}\\
+       \end{array} \right.
+\end{eqnarray*}
 \end{enumerate}
 
 \subsubsection{Analysis}
@@ -550,6 +573,7 @@ Corner case: $R_2=\phi$, then RHS should be 0. But, in size estimation, doesn't 
 \end{itemize}
 \rih{Estimate for $\bowtie$}
 \begin{itemize}
+\item Assumption: either $\pi_{A}R_1 \subseteq \pi_{A}R_2$ or $\pi_{A}R_1 \supseteq \pi_{A}R_2$.
 \item \textbraceleft PK, FK\textbraceright\ relationship $R_1\bowtie R_2$
 
 One way PK, FK for $R_1, R_2$: 
@@ -557,7 +581,7 @@ $$
 T(W) = \frac{T(R_1)}{V(R_1, A)} T(R_2)
 $$
 
-Generalized to symmetry: 
+Generalized to symmetry (this is an est.): 
 $$
 T(W) = \frac{T(R_1)T(R_2)}{\max\{V(R_1, A), V(R_2, A)\}}
 $$
@@ -573,10 +597,11 @@ A probability approach. The combination should not change the a $V$'s prob distr
 \subsubsection{Hypergraph}
 INGRES greedy heuristic search. 
 
-%+Bibliography
-\begin{thebibliography}{99}
-\bibitem{Label1} ...
-\bibitem{Label2} ...
-\end{thebibliography}
-%-Bibliography
+Small relation $\triangleq \sigma R$  
+
+Two assumptions:
+\begin{enumerate}
+\item $\forall$ join attr, index on it
+\item $\exists$  small reations
+\end{enumerate}
 \end{document}
