@@ -17,6 +17,7 @@
 \def\fullouterjoin{\mathbin{\ojoin\mkern-5.8mu\bowtie\mkern-5.8mu\ojoin}}
 \usepackage{amsbsy}
 \usepackage{amstext}
+
 \begin{document}
 
 %+Title
@@ -604,4 +605,66 @@ Two assumptions:
 \item $\forall$ join attr, index on it
 \item $\exists$  small reations
 \end{enumerate}
+
+\chapter{Failure}
+\section*{Introduction}
+Consistency. T executes 1) until completion \& 2) in isolation. 
+
+Violation of consistency: 
+\begin{enumerate}
+\item Until completion: failures $\ra$ Failure Recovery (FP)
+\item In isolation: Concurrent control with data sharing $\ra$ Concurrency Control
+(CC)
+\item Intersection of both $\ra$ FP $\cup$ CC
+\end{enumerate}
+
+\section{Notations}
+Block based 
+\begin{enumerate}
+\item Input(x) = part mem := x with block 
+\item Output(x) = block := x with block
+\item Read(x,t) = t := x in block 
+\item Write(x,t) = x in block := t // write need Input(x) since block based access.
+\end{enumerate}
+
+\section{FP Solutions}
+\subsection{Undo logging}
+\subsubsection{Clues}
+To undo, records: 
+\begin{enumerate}
+\item \textbf{start}: start of $T_i$
+\item \textbf{prior values}: prior values of $Attrs$
+\item \textbf{commit}: commit of $T_i$
+\end{enumerate}
+\subsubsection{Undo logging rules}
+\begin{enumerate}
+\item Records prior values
+\item \textbf{Prior value log on disk before}: before x is modified on disk, log records pertaining to x must be on disk
+\item \textbf{Commit log on disk after}: before commit is flushed to log, all writes of transaction must be reflected on disk.
+\end{enumerate}
+
+\subsubsection{Recovery rules}
+
+\begin{pseudo}
+for each $T_i$ 
+\end{pseudo}
+
+
+
+\subsection{Redo logging}
+
+\chapter{Concurrency Control}
+\chapter{IVM, Incremental View Maintenance}
+
+\section{IVM}
+Capturing IVM as computation of $\Delta V^+, \Delta V^-$. 
+\begin{align*}
+\Pi_{G, H, G\#H\ra N, S}\ \gamma_{G, H; SUM(A) \ra S} R
+\end{align*}
+
+The problem, view $V_0$ in $f^+$ is not output of aggregation $\gamma$, but the output of projection $\Pi$. 
+
+\textbf{Intermediate view on subexpression}. The solution, create an intermediate view on $\gamma$, i.e. the cache of intermediate result. 
+
+
 \end{document}
