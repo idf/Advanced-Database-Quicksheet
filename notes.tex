@@ -18,6 +18,7 @@
 \usepackage{amsbsy}
 \usepackage{amstext}
 
+
 \begin{document}
 
 %+Title
@@ -612,7 +613,7 @@ Consistency. T executes 1) until completion \& 2) in isolation.
 
 Violation of consistency: 
 \begin{enumerate}
-\item Until completion: failures $\ra$ Failure Recovery (FP)
+\item Until completion: failures $\ra$ Failure Recovery (FR)
 \item In isolation: Concurrent control with data sharing $\ra$ Concurrency Control
 (CC)
 \item Intersection of both $\ra$ FP $\cup$ CC
@@ -629,6 +630,7 @@ Block based
 
 \section{FP Solutions}
 \subsection{Undo logging}
+Immediate write db data to disk 
 \subsubsection{Clues}
 To undo, records: 
 \begin{enumerate}
@@ -636,27 +638,207 @@ To undo, records:
 \item \textbf{prior values}: prior values of $Attrs$
 \item \textbf{commit}: commit of $T_i$
 \end{enumerate}
+
 \subsubsection{Undo logging rules}
 \begin{enumerate}
 \item Records prior values
 \item \textbf{Prior value log on disk before}: before x is modified on disk, log records pertaining to x must be on disk
-\item \textbf{Commit log on disk after}: before commit is flushed to log, all writes of transaction must be reflected on disk.
+\item \textbf{Commit log on disk after}: before commit is flushed to log, all writes of $T$ must be reflected on disk.
 \end{enumerate}
 
+\newpage
 \subsubsection{Recovery rules}
-
 \begin{pseudo}
-for each $T_i$ 
+$S = T_i$ with start $\wedge$ ($\neg$ commit $\vee$ $\neg$ abort)
+foreach record $T_i, X, x$ reversed=true
+  if $T_i \in S$
+    write(X, x) 
+    output(X)
+foreach $T_i$
+  log $T_i, abort$
 \end{pseudo}
+Failure during recovery is not an issue, since undo logging is idempotent.
 
 
 
 \subsection{Redo logging}
+Deferred write db data to disk. 
+\subsubsection{Clues}
+To redo, records: 
+\begin{enumerate}
+\item \textbf{start}: start of $T_i$
+\item \textbf{posterior values}: posterior values of $Attrs$
+\item \textbf{commit}: commit of $T_i$
+\end{enumerate}
+
+\subsubsection{Redo logging rules}
+\begin{enumerate}
+\item Records posterior values
+\item \textbf{Posterior value log on disk before}: before x is modified on disk, log records pertaining to x must be on disk
+\item \textbf{Commit log on disk before}: before all writes of $T$ is reflected on disk, commit must flush to log.
+\item \textbf{Flush}: flush log at $T$ commit. 
+\end{enumerate}
+
+\subsubsection{Recovery rules}
+\begin{pseudo}
+# no abort log
+$S = T_i$ with start $\wedge$ commit
+foreach record $T_i, X, x$ reversed=false
+  if $T_i \in S$
+    write(X, x)
+    output(X) # optional
+\end{pseudo}
+
+\subsubsection{Checkpoint}
+Redo recovery is very slow. 
+
+\subsection*{Comparison}
+\begin{enumerate}
+\item Undo
+\begin{enumerate}
+\item unable to bring \textit{backup} DB copies up to date (since no posterior values recorded, need to diff db and backup db).
+\item real writes at end of transaction needed (since immediate db write)
+\end{enumerate}
+\item Redo
+\begin{enumerate}
+\item need to keep all modified blocks in \textit{memory} until commit (since deferred db write)
+\end{enumerate}
+\end{enumerate}
+
+\subsection{Undo/Redo logging}
+$T_i, X, x_{new}, x_{old}$
+\subsubsection{Clues}
+\begin{enumerate}
+\item \textbf{start}
+\item \textbf{prior and posterior values}
+\item \textbf{commit}
+\end{enumerate}
+
+\subsubsection{Undo/Redo logging rules}
+\begin{enumerate}
+\item No requirement on memory page flush $X$ w.r.t. $T_i$ commit.
+\item Records prior and posterior values
+\item \textbf{Posterior value log on disk before}: before X is modified on disk, log
+records pertaining to X must be on disk
+\item \textbf{Commit log on disk before}: before all writes of $T_i$ 
+is modified on disk, commit must flush to log.
+\item \textbf{Flush}: flush log at $T$ commit. 
+\end{enumerate}
+
+\subsubsection{Recovery rules}
+$S = T_i$ with start $\wedge$ commit
+\begin{enumerate}
+\item \textbf{Backward pass}: last checkpoint $\leftarrow$ end of log; undo $T \notin S$.
+\item \textbf{Forward pass}: last checkpoint $\rightarrow$ end of log; redo $T \in S$.
+\end{enumerate}
+
+\subsubsection{Checkpoint - Non-quiesce}
+
 
 \chapter{Concurrency Control}
+\section{Concepts}
+\begin{enumerate}
+\item \textbf{Conflict actions}: RW, WR, WW. e.g. RW is $R_i(A); W_j(A)$. Different transactions' action on the same attr. 
+\item \textbf{Schedule}: chronological order of actions 
+\item \textbf{Serial schedule}: no interleaving actions of transactions in schedule
+\item \textbf{Conflict equivalent $\equiv^c$}: $S_1 \equiv^c S_2$ if $S_1$ can be transformed into $S_2$ by swaps non-conflicting actions inter-transactions.
+\item \textbf{Conflict serializable}: a schedule $S$ is conflict serializable if $\exists SerS, SerS\text{ is a serial schedule}, S\equiv^c SerS$.
+\end{enumerate}
+
+Only non-conflicting actions can be swapped. Unable to swap conflicting actions.
+
+
+\section{Precedence Graph}
+\subsection{Definitions}
+Implicitly assume $i\neq j$.
+
+Graph definitions: 
+\begin{enumerate}
+\item $G = P(S)$. Directed graph 
+\item $V \triangleq \{T|T\in S\}$
+\item $E \triangleq \{T_i \ra T_j| p_i(A) <_s q_j(A) \wedge p_i(A)  \text{ conflicts } q_j(A)\}$. 
+\end{enumerate}
+To construct a $P(S)$:
+\begin{pseudo}
+foreach object $A$
+  foreach ordered pair $p_i(A), q_j(A)$
+    if $p_i(A) \text{ conflicts } q_j(A)$
+      add $T_i \ra T_j$
+\end{pseudo}
+\subsection{Theorem}
+\begin{enumerate}
+\item\ Lemma: 
+$$S_1 \equiv^c S_2 \Ra P(S_1)=P(S_2)$$
+\item Theorem:
+$$P(S) \text{ is acyclic} \Leftrightarrow S \text{ is conflict serializable}$$
+\end{enumerate}
+\section{Lock}
+\subsection{Fundamental locking protocol}
+\subsubsection{Protocol rules}
+3 Rules: 1. Well-formed (attr) 2. Legal ($Ts$) 3. 2PL
+\begin{figure}[H]
+    \centerline{\includegraphics[height = 1.8in]{img/lockFundamental}}
+    \caption{Fundamental Locking Protocol}
+  \label{fig:fundamentalLockingProtocol}
+\end{figure}
+\begin{enumerate}
+\item \textbf{Well-formed}: $\forall$ R/W action. $T_i$ has to lock $l_i(A)$ before the action, and has to unlock $u_i(A)$ after the action.
+\item \textbf{Legal}: No $T_j$ can $l_j(A)$ during the range of $l_i(A) ... u_i(A)$ of $T_i$.
+\item \textbf{2PL}: No $u_i(.)$ before $l_i(.)$ and no $l_i(.)$ after $u_i(.)$. 
+\end{enumerate}
+2PL may lead to deadlock, thus need to detect deadlock and abort the later transaction.
+
+\subsubsection{Proof}
+Prove that: under the 3 rules of the locking protocol $\Ra$ schedules $S$ conflict serializable. 
+
+Lemma: In $S$, 
+$$
+T_i \ra T_j \Ra SH(T_i) <_s SH(T_j)
+$$
+
+, where $SH(T_i)\triangleq Shrink(T_i)$, first unlock action of $T_i$.
+
+Then prove by contraction using the lemma. 
+\subsection{Lock Performance}
+\subsubsection{Lock modes}
+Lock modes $l\hp \L$:
+\begin{enumerate}
+\item Shared S: SS $\neg$ conflict 
+\item Exclusive X
+\item Incremental I: II $\neg$ conflict 
+\item Update U: knows $l\hp S$ will upgrade to $l\hp X$. Avoid upgrade causing deadlock.
+\end{enumerate}
+Operations:
+\begin{enumerate}
+\item Upgrade: $l\hp S \ra l\hp X$. Notice upgrade is different from update.
+\end{enumerate}
+Compatibility matrix: 
+
+compatibility of different modes in \textbf{legal} scheduler.
+\begin{figure}[H]
+    \centerline{\includegraphics[height = 1.7in]{img/lockModes}}
+    \caption{Compatibility Matrix}
+  \label{fig:compatibilityMatrix}
+\end{figure}
+
+\subsubsection{Lock Table}
+Hash table + LinedList for info.
+\begin{figure}[H]
+    \centerline{\includegraphics[height = 1.8in]{img/lockTable}}
+    \caption{Lock Table}
+  \label{fig:lockTable}
+\end{figure}
+
+
+\subsubsection{Multi-granularity}
+The object (lock target) is multi-granularity. 
+
+\section{Tree-based CC \& Validation CC}
+
+
 \chapter{IVM, Incremental View Maintenance}
 
-\section{IVM}
+\section{IVM Cache}
 Capturing IVM as computation of $\Delta V^+, \Delta V^-$. 
 \begin{align*}
 \Pi_{G, H, G\#H\ra N, S}\ \gamma_{G, H; SUM(A) \ra S} R
