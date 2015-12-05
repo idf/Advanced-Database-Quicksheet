@@ -616,7 +616,7 @@ Violation of consistency:
 \item Until completion: failures $\ra$ Failure Recovery (FR)
 \item In isolation: Concurrent control with data sharing $\ra$ Concurrency Control
 (CC)
-\item Intersection of both $\ra$ FP $\cup$ CC
+\item Intersection of both $\ra$ FR $\cup$ CC
 \end{enumerate}
 
 \section{Notations}
@@ -783,7 +783,7 @@ $$P(S) \text{ is acyclic} \Leftrightarrow S \text{ is conflict serializable}$$
 \end{figure}
 \begin{enumerate}
 \item \textbf{Well-formed}: $\forall$ R/W action. $T_i$ has to lock $l_i(A)$ before the action, and has to unlock $u_i(A)$ after the action.
-\item \textbf{Legal}: No $T_j$ can $l_j(A)$ during the range of $l_i(A) ... u_i(A)$ of $T_i$.
+\item \textbf{Legal}: No $T_j$ can $l_j(A)$ during the time range of $l_i(A) ... u_i(A)$ of $T_i$.
 \item \textbf{2PL}: No $u_i(.)$ before $l_i(.)$ and no $l_i(.)$ after $u_i(.)$. 
 \end{enumerate}
 2PL may lead to deadlock, thus need to detect deadlock and abort the later transaction.
@@ -816,25 +816,113 @@ Compatibility matrix:
 
 compatibility of different modes in \textbf{legal} scheduler.
 \begin{figure}[H]
-    \centerline{\includegraphics[height = 1.7in]{img/lockModes}}
-    \caption{Compatibility Matrix}
-  \label{fig:compatibilityMatrix}
+\centering
+\begin{tabular}{cc}
+  \includegraphics[height = 0.8in]{img/SXI} &
+  \includegraphics[height = 0.77in]{img/SXU} &
+  a & b 
+\end{tabular}
+\caption{(a) SXI compatibility. (b) SXU compatibility.}
+\label{fig:images}
 \end{figure}
 
 \subsubsection{Lock Table}
 Hash table + LinedList for info.
 \begin{figure}[H]
-    \centerline{\includegraphics[height = 1.8in]{img/lockTable}}
+    \centerline{\includegraphics[height = 1.8in, width=3.8in]{img/lockTable}}
     \caption{Lock Table}
   \label{fig:lockTable}
 \end{figure}
 
 
 \subsubsection{Multi-granularity}
-The object (lock target) is multi-granularity. 
+The object (lock target) is multi-granularity: Relation, disk block, tuple. 
 
-\section{Tree-based CC \& Validation CC}
+I for \textbf{intent}.
 
+Compatibility matrix:  
+\begin{figure}[H]
+    \centerline{\includegraphics[height = 1.7in]{img/lockModes}}
+    \caption{Compatibility Matrix}
+  \label{fig:compatibilityMatrix}
+\end{figure}
+
+\begin{tabular}{ll}
+\hline\noalign{\smallskip}
+\textbf{Parent locked in} & \textbf{Child can be locked in} \\
+\noalign{\smallskip}\hline\noalign{\smallskip}
+IS & IS S \\
+IX & all \\
+S & [IS S] \\
+SIX & IX X [SIX] \\
+X & none\\
+\noalign{\smallskip}\hline\noalign{\smallskip}
+\caption{Hierarchy & [.] for not necessary}
+\end{tabular}
+
+
+\subsubsection{Delete and Insert}
+\begin{itemize}
+\item Delete: lock on tuple
+\item Insert: 
+\begin{enumerate}
+\item Lock on tuple. Issue of phantom objects
+\item Lock on table. Issue of concurrency 
+\item Lock on partial table by B+Tree index
+\end{enumerate}
+\end{itemize}
+
+
+\section{Tree-based CC}
+\subsection{Clues}
+Once the child has been locked, the $\pi$ can be unlocked
+\subsection{Rules}
+Tree protocol rules for $X$ 
+\begin{enumerate}
+\item 1st lock by $T_i$ can be on any item 
+\item Subsequently, item Q can be locked by $T_i$ only if $\pi(Q)$ is locked by $T_i$.
+\item Item can be unlocked at any time
+\item After item Q is unlocked by $T_i$, it cannot be relocked by $T_i$. (2PL in the object level). 
+\end{enumerate}
+\section{Validation CC}
+\subsection{Concepts}
+3-Phase transactions:
+\begin{enumerate}
+\item \textbf{Starts} (read \& then write to buffer)
+\item \textbf{Validate} (atomic)
+\item \textbf{Write} (write to disk)
+\end{enumerate}
+System maintains 
+\begin{itemize}
+\item FIN: set of T's finish phase 3
+\item VAL: set of T's finishes phase 2
+\end{itemize}
+Key ideas:
+Schedule S validation order $T_1T_2...T_n \ra S\equiv^c T_1T_2...T_n$
+\subsection{Rules}
+Intuitions: 
+\begin{enumerate}
+\item Avoid WR conflicts: conflicts arises when $T_h$ hasn't written before $T_i$ starts; thus $T_h$ should finish before $T_i$ starts 
+\item Avoid WW conflicts: conflicts arises $T_h$ hasn't written before $T_i$ writes; thus $T_h$ should finish before $T_i$ validated. 
+\end{enumerate}
+Rules:
+\begin{pseudo}
+when $T_i$ starts
+  IGNORE[$T_i$] = FIN
+when $T_i$ validates 
+  if check($T_i$)
+    VAL.add($T_i$)
+    commence $T_i$ writes 
+    FIN.add($T_i$)
+    
+    
+def check($T_i$)
+  for $T_h$ in VAL - IGNORE[$T_i$]
+    if $WS[T_h]\cap RS[T_i] \neq \phi$ || $WS[T_h]\cap WS[T_i] \neq \phi$ && $T_h \notin FIN$
+      return false
+  return true
+  
+\end{pseudo}
 
 \chapter{IVM, Incremental View Maintenance}
 
