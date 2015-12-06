@@ -174,7 +174,7 @@ Ptrs & \lceil\frac{n+1}{2}\rceil & \lfloor\frac{n+1}{2}\rfloor \\
 \item Follow the range convention of $[a, b)$.
 \item Left leaning convention 
 \end{itemize}
-
+\newpage
 \subsection{Operations}
 \textbf{Core clues}:
 \begin{enumerate}
@@ -210,10 +210,10 @@ Core clues:
 \end{figure}
 Definitions:
 \begin{itemize}
-\item $m \triangleq a_1a_2...a_i$, the $i$ \note{lower} bits of $H(K)$ intended for hashing - 110\textbf{001}
-\item $n$ number of buckets (blocks) currently using (max number); doesn't count overflow block. 
-\item $r$ number of records
-\item $\tau$ threshold for $\frac{r}{n\cdot cap}$, where $cap$ is the number of slots per bucket (textbook is $\frac{r}{n}$).
+\treeitem $m \triangleq a_1a_2...a_i$, the $i$ \note{lower} bits of $H(K)$ intended for hashing - 110\textbf{001}
+\treeitem $n$ number of buckets (blocks) currently using (max number); doesn't count overflow block. 
+\treeitem $r$ number of records
+\treeitem $\tau$ threshold for $\frac{r}{n\cdot cap}$, where $cap$ is the number of slots per bucket (textbook is $\frac{r}{n}$).
 \end{itemize}
 Insert: 
 \begin{itemize}
@@ -411,16 +411,26 @@ proof: $R\times S = S\times R$
 \item \rih{Logics}
 \begin{align*}
 \sigma_{c_1\wedge c_2}R &= \sigma_{c_1}\ \sigma_{c_2}R \\
-\sigma_{c_1\vee c_2}R &= \sigma_{c_1}R \cup \sigma_{c_2}R
+\sigma_{c_1\vee c_2}R &= \sigma_{c_1}R\ \cup\ \sigma_{c_2}R
 \end{align*}
-\begin{flushright}, notice that $\vee$ only applies for set-version\end{flushright}
+\begin{flushright}, notice that $\vee$ only applies for \note{set} version\end{flushright}
 To apply $\vee$ to \note{bag} version: 
 \begin{align*}
-\sigma_{c_1} R \cup \sigma_{c_2} (R-\sigma_{c_1}R)
+\sigma_{c_1\vee c_2}R = \sigma_{c_1} R\ \cup\ \sigma_{c_2} (R-\sigma_{c_1}R)
+\end{align*}
+
+On $\vee$ on $\bowtie$, where $c_1$ on $R$ and $c_2$ on $S$.
+\begin{align*}
+\sigma_{c_1 \vee c_2} R\bowtie S &= \sigma_{c_1} R \bowtie S\ \cup\ (R-\sigma_c_1 R)\bowtie \sigma_c_2 S \\
+&= \sigma_c_2S \bowtie R\ \cup\ (S-\sigma_c_2 S) \bowtie \sigma_c_1 R
 \end{align*}
 
 Decomposition of Negation:
-TODO
+\begin{align*}
+\sigma_{\neg c_1} R &= R - \sigma_{c_1} R \\
+\sigma_{c_1 \wedge \neg c_2}R &= \sigma_{c_1} R - \sigma_{c_2} R \\
+\sigma_{c_1 \vee \neg c_2}R &= \sigma_{c_1} R\ \cup\ \sigma_{\neg c_2} (R-\sigma_{c_1}R)\\ &= \sigma_{c_1} R\ \cup\ (R-\sigma_c_1 R) - \sigma_c_2(R-\sigma_c_1 R)
+\end{align*}
 
 \item \rih{Push down $\sigma$} !important
 \begin{itemize}
@@ -434,13 +444,13 @@ $$
 $$
 \sigma_{c}(R-S) = (\sigma_{c} R)-S
 $$
-\item For $\{\times, \bowtie\}$, it can further drops the $\sigma_{c}T$ to $T$ if the condition does not refer to attributes in $T$.
+\item For $\{\times, \bowtie\}$, it can further drops the $\sigma_{c}T$ to $T$ if the condition does \textit{not} refer to attributes in $T$.
 \begin{align*}
 \sigma_{c}(R\cdot S) = R\cdot (\sigma_{c} S) 
 \end{align*}
 \end{itemize}
 
-proof: $\sigma_{A=2}(R\bowtie S) = (\sigma_{A=2}R)\bowtie S$, given commutativity and $\sigma_{c}(R\bowtie S) = R\bowtie \sigma_{c}S$
+Proof: $\sigma_{A=2}(R\bowtie S) = (\sigma_{A=2}R)\bowtie S$, given commutativity and $\sigma_{c}(R\bowtie S) = R\bowtie \sigma_{c}S$
 \begin{align*}
 \sigma_{A=2}(R\bowtie S) = \sigma_{A=2}(S\bowtie R) = S \bowtie (\sigma_{A=2}R)=(\sigma_{A=2}R\bowtie S)
 \end{align*}
@@ -452,20 +462,24 @@ This is a technique of proof by using axioms.
  
 \begin{align*}
 & \pi_x (R \cup S) = \pi_x R \cup \pi_x S \\
-& \pi_a (R \times S) = \pi_a (\pi_{cond1 \supseteq a}R \times \pi_{cond2 \supseteq a} S) \\
-& \pi_a (R \bowtie S) = \pi_a(\pi_{cond1 \supseteq (a \cup R.c)}\ R \bowtie \pi_{cond2 \supseteq (a\cup S.c)}\ S) \\
+& \pi_a (R \times S) = \pi_a (\pi_{c_1 \supseteq a}R \times \pi_{c_2 \supseteq a} S) \\
+& \pi_a (R \bowtie S) = \pi_a(\pi_{c_1 \supseteq (a \cup R.c)}\ R \bowtie \pi_{c_2 \supseteq (a\cup S.c)}\ S) \\
 & \pi_x R = \pi_x \pi_{y\supseteq x} R
 \end{align*}
-$\pi$ can reduce the length of a tuple; thus it is useful to push down $\pi$ to fit more tuples in memory. When denoting $\supset, \supseteq, \subset, \subseteq$, it is for AND composite. $cond1\supseteq a$ is a shorthand notation for $\{cond1|cond1 \supseteq a\}$, a notation for superset. 
-
-\rih{Difference}. Notice that, $\pi_a (R-S) \neq \pi_a R - \pi_a S$ 
-
-\rih{Push down priority of $\pi, \sigma$}. Normally $\sigma$ is given higher priority than $\pi$ if $\sigma$ can do index selection to avoid $\pi$ on all tuples 
+\begin{itemize}
+\item Supper set for conditions in $\pi$.
+\item $\pi$ can reduce the length of a tuple; thus it is useful to push down $\pi$ to fit more tuples in memory. When denoting $\supset, \supseteq, \subset, \subseteq$, it is for AND composite. $cond1\supseteq a$ is a shorthand notation for $\{c_1|c_1 \supseteq a\}$, a notation for superset. 
+\item \rih{Difference}. Notice that, $\pi_a (R-S) \neq \pi_a R - \pi_a S$ 
+\item \rih{Push down priority of $\pi, \sigma$}. Normally $\sigma$ is given higher priority than $\pi$ if $\sigma$ can do index selection to avoid $\pi$ on all tuples (Section - \ref{sec:queryExec})
+\end{itemize}
 \item \rih{Aggregation} 
 
 \begin{align*}
-& \sigma_{cond\subset grpAttrs} \Sigma_{grpAttrs; attr\ra attr'} R = \Sigma_{grpAttrs, attr\ra attr'} \sigma_{cond\subset grpAttrs} R \\
+& \text{Push down } \sigma\\
+& \sigma_{c\subset grpAttrs} \Sigma_{grpAttrs; attr\ra attr'} R = \Sigma_{grpAttrs, attr\ra attr'} \sigma_{c\subset grpAttrs} R \\
+& \text{Push down } \gamma\\
 & \Sigma_{GL;GA\ra RA} (R \cup S) = +_{RA1, RA2:RA} (\Sigma_{GL; GA\ra RA1 }R \bowtie \Sigma_{GL; GA\ra RA2} S)\\
+& \text{Combine } \gamma\\
 & \Sigma_{GL2; RA1 \ra RA2} \Sigma_{GL1; GA \ra RA1} R = \Sigma_{GL2; GA\ra RA2} R
 \end{align*}
 Notation, in slides it is $grpList$ or $GL$ as $grpAttrs$; $SUM$ as $\Sigma$; $PLUS$ as +.
@@ -483,13 +497,14 @@ The \note{breakthrough} points:
 
 
 \section{Algorithms for Relational Algebra Operators}
-\subsection{Query Execution}
+\subsection{Query Execution}\label{sec:queryExec}
 \subsubsection{Implementations of $\bowtie$}
 
 Notice:
 \begin{itemize}
-\item Write out of the join result at the end is not considered due to pipeline.
-\item Time of execution is measured by number of disk IO. 
+\item \textbf{Output pipeline.} Write out of the join result at the end/final/return is not considered due to output pipeline, always.
+\item \textbf{Input pipeline.} 1 $B(R)$ may be saved due to input pipeline. 
+\item \textbf{Cost model}. Time of execution is measured by number of disk IOs. 
 \end{itemize}
 
 
@@ -510,59 +525,61 @@ $$B(R)+B(S)$$
 \end{enumerate}
 Possible to combine the merge 
 
-\textbf{Time.} 1 read 1 write for the sort, 1 read to the merge; thus 
+\textbf{Time.} \textbf{Sort}: 1 read 1 write. \textbf{Merge}: 1 read; thus 
 \begin{eqnarray*}
 time = \left\{ \begin{array}{rl}
   3B(R)+3B(S) &\text{// if normal} \\
   3B(R)+B(S) &\text{// if S sorted on attr} \\
-  2B(R)+2B(S) &\text{// if pipeline}\\
-  2B(R) &\text{// if pipeline and S sorted}
+  2B(R)+2B(S) &\text{// if input pipeline}\\
+  2B(R) &\text{// if input pipeline and S sorted}
        \end{array} \right.
 \end{eqnarray*}
 \item $\bowtie^\text{RI}, \bowtie^\text{INDEX}$ Index join 
 
-\textbf{Difference} btw RI and INDEX: $\bowtie^\text{RI}$ uses only 1 index; while $\bowtie^\text{INDEX}$ uses 2 indexes, thus it can process on indexes first (ptr), delaying the block access to data. 
+\textbf{Difference.} btw RI and INDEX: $\bowtie^\text{RI}$ uses only 1 index; while $\bowtie^\text{INDEX}$ uses 2 indexes, thus it can process on indexes first (ptr), delaying the block access to data. 
 
-\textbf{Time.} when no relation fits in memory, $\bowtie^{RI}$ outperforms any other technique. It reads $B(R)$; for each $T(R)$, load $B(S)/V(S, B)$ blocks according to the index; thus 
+\textbf{Time \& Mem.} when \textit{no} relation fits in mem, $\bowtie^{RI}$ outperforms $\forall$ any other technique. 
+
+\textbf{Cost}. It reads $B(R)$; for each $T(R)$, loads $\lceil B(S)/V(S, B)\rceil$ blocks according to the index; thus 
 \begin{eqnarray*}
 time = \left\{ \begin{array}{rl}
-  B(R)+T(R)\cdot (1+\frac{B(S)}{V(S, B)}) &\text{// if normal} \\
-  T(R)\cdot (1+\frac{B(S)}{V(S, B)}) &\text{// if pipeline}\\
+  B(R)+T(R)\cdot \big(1+\frac{B(S)}{V(S, B)}\big) &\text{// if normal} \\
+  T(R)\cdot \big(1+\frac{B(S)}{V(S, B)}\big) &\text{// if input pipeline}\\
        \end{array} \right.
 \end{eqnarray*}
 
 \begin{itemize}
-\item $1+...$, the 1 for \textit{index block access} to the non-cached leaf node of the B-tree index 
+\item $1+...$, the 1 for \textit{index block access} to the non-cached leaf nodes of the B-tree index 
 \item Create index (normally already created): read blocks and write index $B(S)+B(index)$
 \end{itemize}
 \item $\bowtie^\text{HASH}$ Hash join 
 
-\textbf{Requirement.} $\min(B(R_{i}), B(S_{i}})) <M$. The smaller \textit{bucket} need to fit in mem when merge the bucket. 
+\textbf{Requirement.} $\min\big(B(R_{i}), B(S_{i}})\big) <M$. The smaller \textit{bucket} need to fit in mem when join the bucket. 
 
 \textbf{Process.} Two phases
 \begin{enumerate}
 \item Hash every tuple into $M-1$ buckets $R_i, S_i$ (the remaining 1 for the temp working memory).
-\item Load either $R_i, S_i$ into mem, scan the other and join.
+\item Load either bucket $R_i, S_i$ into mem, scan the other and join.
 \end{enumerate}
-\textbf{Time.} 1 read write R, S to create hashed buckets. 1 read to hash join; thus 
+\textbf{Cost.} To create hashed buckets, 1 read write R, S. To hash join, 1 read; thus 
 \begin{eqnarray*}
 time = \left\{ \begin{array}{rl}
   3B(R)+3B(S) &\text{// if normal} \\
-  2B(R)+2B(S) &\text{// if pipeline}\\
+  2B(R)+2B(S) &\text{// if input pipeline}\\
        \end{array} \right.
 \end{eqnarray*}
 \end{enumerate}
 
 \subsubsection{Analysis}
 \begin{enumerate}
-\item Results are \textit{pipelined}, thus not consider write the final result into disk. 
-\item \textit{Sorted} table does not need to sort in sort-merge on the sorted attr.
+\item \textbf{Output pipeline.} Results are \textit{pipelined} to output, thus not consider write the final result into disk. 
+\item \textbf{Sort.} Sorted table does not need to sort in sort-merge on the sorted attr.
 \begin{enumerate}
 \item 1-pass on sorted table, result may also be sorted (depends).
 \item sort-merge will produce sorted result
 \end{enumerate}
-\item Intermediate results do not have index. 
-\item calculate time $\leftarrow$ calculate the \# disk I/O $\leftarrow$ \# blocks $B(R)$ $\leftarrow$ intermediate tuple size $T(R)$. 
+\item \textbf{Intermediate non-index.} Intermediate results do not have index. 
+\item \textbf{Cost algorithm.} calculate time $\leftarrow$ calculate the \# disk IO $\leftarrow$ \# blocks $B(R)$ $\leftarrow$ intermediate tuple size $T(R)$. 
 \end{enumerate}
 \subsection{Cost analysis (intermediate size)}
 \rih{Intro}
@@ -570,14 +587,14 @@ time = \left\{ \begin{array}{rl}
 \item Two aspects of cost analysis:
 \begin{enumerate}
 \item Size of the intermediate result 
-\item Number of I/Os.
+\item Number of IOs.
 \end{enumerate}
 \item Notations
 \begin{enumerate}
-\item T(R) : #tuples in R
-\item S(R) : #bytes (size) in each R tuple
-\item B(R): #blocks to hold all R tuples 
-\item V(R, A) : #distinct values in R for attribute A
+\treeitem T(R) : #tuples in R
+\treeitem S(R) : #bytes (size) in each R tuple
+\treeitem B(R): #blocks to hold all R tuples 
+\treeitem V(R, A) : #distinct values in R for attribute A
 \end{enumerate}
 \item Corner case 
 $$
@@ -588,6 +605,7 @@ Corner case: $R_2=\phi$, then RHS should be 0. But, in size estimation, doesn't 
 \rih{Estimate for $\bowtie$}
 \begin{itemize}
 \item Assumption: either $\pi_{A}R_1 \subseteq \pi_{A}R_2$ or $\pi_{A}R_1 \supseteq \pi_{A}R_2$.
+Notice the assumption may be violatd. 
 \item \textbraceleft PK, FK\textbraceright\ relationship $R_1\bowtie R_2$
 
 One way PK, FK for $R_1, R_2$: 
@@ -602,8 +620,7 @@ $$
 \end{itemize}
 \rih{Subexpressions \& Value preservation}
 
-A probability approach. The combination should not change the a $V$'s prob distr. since assumped indpt.
-\begin{itemize}
+\textbf{Probability approach}. The combination should not change the a $V$'s prob distr. since assumped indpt; thus,\begin{itemize}
 \item Value preservation for the pushing down of $\sigma$. 
 \item Value preservation for the composite $\bowtie$. 
 \end{itemize}
@@ -634,10 +651,10 @@ Violation of consistency:
 \section{Notations}
 Block based 
 \begin{enumerate}
-\item Input(x) $\triangleq$ part mem := x with block 
-\item Output(x) $\triangleq$ block := x with block
-\item Read(x,t) $\triangleq$ t := x in block 
-\item Write(x,t) $\triangleq$ x in block := t // write need Input(x) since block based access.
+\treeitem Input(x) $\triangleq$ part mem := x with block 
+\treeitem Output(x) $\triangleq$ block := x with block
+\treeitem Read(x,t) $\triangleq$ t := x in block 
+\treeitem Write(x,t) $\triangleq$ x in block := t // write need Input(x) since block based access.
 \end{enumerate}
 
 \section{FR Solutions}
@@ -939,8 +956,7 @@ when $T_i$ validates
     VAL.add($T_i$)
     commence $T_i$ writes 
     FIN.add($T_i$)
-    
-    
+        
 def check($T_i$)
   for $T_h$ in VAL - IGNORE[$T_i$]
     if $WS[T_h]\cap RS[T_i] \neq \phi$ || $WS[T_h]\cap WS[T_i] \neq \phi$ && $T_h \notin FIN$
