@@ -2,7 +2,7 @@
 \documentclass[a4paper]{report}
 \usepackage{commons/commons}
 \usepackage{commons/note_style}
-
+\usepackage[normalem]{ulem}
 \usepackage{comment}
 \usepackage{titlesec}
 \titleformat{\chapter}[display]
@@ -23,7 +23,7 @@
 
 %+Title
 \title{Advanced Database Quicksheet}
-\author{Daniel D. Zhang}
+\author{Daniel D. Zhang, \\ Based on \textit{Database Systems - The Complete Book}}
 \date{Fall 2015. \today}
 \maketitle
 %-Title
@@ -50,6 +50,7 @@
 \rih{Mgt}. Management 
 \rih{idx}. Access key to array, that is array index; but it is not the database index.
 \rih{est}. Estimate. 
+\rih{$\bot$}. Independent
 
 \end{obeylines}
 \chapter{Introduction}
@@ -83,9 +84,9 @@ the event of power loss, crashes, or
 \item Blocked-based access 
 \item Different Rates of Improvement 
 \end{enumerate}
-\item Tuned for blocks: Two-Phase, Multiway MergeSort (TPMMS). 
+\item Tuned for blocks: Two-Phase, Multiway \textbf{MergeSort} (TPMMS). 
 \begin{enumerate}
-\item Phase 1: Load and sort into multiple lists 
+\item Phase 1: Load db and sort into multiple lists 
 \item Phase 2: Merge multiple lists 
 
 Upper data size: 
@@ -94,14 +95,25 @@ $$
 $$
 , where $M\trieq$ RAM byte size, $B\trieq$ block byte size (rather than \#blocks).
 
-core clues, TODO
+\textbf{Core clues}
+\begin{enumerate}
+\item Phase 1 constraint: max list size: $M$
+\item Phase 2 constraint: max \#lists: $\frac{M}{B}$
+
+Thus max data size: $\frac{M^2}{B}$. 
+\end{enumerate}
 
 Block I/O cost:
 \begin{enumerate}
-\item phase 1: B(R) read + B(R) write 
-\item phase 2: B(R) read + B(R) write 
+\item phase 1: $B(R)$ read + $B(R)$ write 
+\item phase 2: $B(R)$ read + $B(R)$ write 
 \end{enumerate}
 , where B(x) is the number of block. 
+
+Thus total IO costs:
+$$
+4B(R) 
+$$
 \end{enumerate}
 \end{itemize}
 
@@ -114,11 +126,12 @@ Block I/O cost:
   \item Primary index
   \item Secondary index. 
 
-  Notice the order of index: $i+1, i$ level of indexes. Secondary is meaningless to have a dense index. 
+  Notice the order of index: $i+1, i$ level of indexes. Secondary is at the outer level. Secondary is meaningless to have a dense index. 
   
   
   
   \end{enumerate}
+  $\bot$
   \begin{enumerate}
   \item Dense Index
   \item Spare Index
@@ -146,7 +159,7 @@ Block I/O cost:
 \end{enumerate}
 \section{B+Tree}
 \subsection{Basics}
-Root node can be any size. 
+Root node can be any size. While non-root nodes have most $n$ slots.
 
 \begin{tabular}{lll}
 \hline\noalign{\smallskip}
@@ -163,19 +176,19 @@ Ptrs & \lceil\frac{n+1}{2}\rceil & \lfloor\frac{n+1}{2}\rfloor \\
 \end{itemize}
 
 \subsection{Operations}
-Core clues
+\textbf{Core clues}:
 \begin{enumerate}
 \item \textbf{Invariant}: children balanced or left-leaning
 \item \textbf{Split}: split half, thus invariant.
-\item \textbf{Leaf-Up}: no delete, recursively move up the right node's first child; thus invariant.
-\item \textbf{Nonleaf-Up}: delete and recursively move up the left's last if left-leaning or right's first if balanced; thus invariant. 
+\item \textbf{Leaf-Up}: \textit{no delete}, recursively move up the right node's first child; thus invariant.
+\item \textbf{Nonleaf-Up}: \textit{delete} and recursively move up the left's last if left-leaning or right's first if balanced; thus invariant. 
 \end{enumerate}
 
 \section{Hash}
 \subsection{Extensible hashing}
 Core clues:
 \begin{enumerate}
-\item Number of \textit{higher} order bit used $i$: $hash[:i]$ - \textbf{110}001
+\item Number of \note{higher} order bit used $i$: $hash[:i]$ - \textbf{110}001
 \item When overflow:
   \begin{enumerate}
   \item \textbf{Expand} the index $i=i+1$.
@@ -186,7 +199,7 @@ Core clues:
 \end{enumerate}
 \begin{figure}[H]
         \centerline{\includegraphics[height = 2in]{img/extensible_hashing}}
-        \caption{Piazza}
+        \caption{Extensible Hashing}
     \label{fig:extensibleHashing}
 \end{figure}
 \subsection{Linear Hashing}
@@ -197,21 +210,21 @@ Core clues:
 \end{figure}
 Definitions:
 \begin{itemize}
-\item $m \triangleq a_1a_2...a_i$, the $i$ \textit{lower} bits of $H(K)$ intended for hashing - 110\textbf{001}
+\item $m \triangleq a_1a_2...a_i$, the $i$ \note{lower} bits of $H(K)$ intended for hashing - 110\textbf{001}
 \item $n$ number of buckets (blocks) currently using (max number); doesn't count overflow block. 
 \item $r$ number of records
-\item $\tau$ threshold for $\frac{r}{n*cap}$, where $cap$ is the number of slots per block (textbook is $\frac{r}{n}$).
+\item $\tau$ threshold for $\frac{r}{n\cdot cap}$, where $cap$ is the number of slots per bucket (textbook is $\frac{r}{n}$).
 \end{itemize}
 Insert: 
 \begin{itemize}
 \item if $m<n$, insert at $m$-th bucket.
 \item if $n\leq m < 2^i$, insert at $0a_2...a_i$-th bucket, (unset the \textit{highest} bit of usage bit $m$).
-\item if designated bucket full, append overflow block. 
+\item if designated bucket full, append to overflow block. 
 \end{itemize}
 Expand:
 \begin{itemize}
-\item if $\frac{r}{n*cap}>\tau$, inc $n$ $\wedge$ if the bucket idx is like $1.*$, split the corresponding $0...$ bucket. 
-\item if $n>2^i$, inc $i$. Bucket idx remain unchanged. ($i$ can be derived from $n$) 
+\item if $\frac{r}{n\cdot cap}>\tau$, inc $n$ $\wedge$ if the resulting bucket idx is like $1.*$, split the corresponding $0.*$ bucket. 
+\item if $2^i<n$, inc $i$. Bucket idx remain unchanged. ($i$ can be passively derived from $n$) 
 \end{itemize}
 
 \section{BitMap}
@@ -255,32 +268,33 @@ $$
 \subsection{Relational algebra}\label{rlsAlgebra}
 Notations:
 \begin{enumerate}
-\item $\sigma$: Selection, WHERE (conditions). Selection does not preserver index.
-\item $\times$: Cartesian product, FROM product. It does not de-dup columns.  
-\item $\Pi$: Projection, SELECT (attributes)
+\item $\sigma$: Selection, \textit{where} (conditions). Selection does not preserver index.
+\item $\times$: Cartesian product, \textit{from} product. It does not de-dup columns.  
+\item $\Pi$: Projection, \textit{select} (attributes)
 \item $x\ra y$: Extended projection, rename $x$ to $y$. Scalar func: $a+b\ra y$, String ops: $c||d \ra y$
 
 \textbf{Scalar} functions: their input comes from the same tuple (as opp. \textbf{aggregate}). Notice that $\Pi_{x\ra y} R$ is to project R to x first and to apply the transformation. 
 $$
 \Pi_{x, y\ra z, x+y\ra w} R
 $$
-Alternatively, $PLUS_{x, y\ra z}$; similarly $CONCAT, MULT, CONCAT}$
-\item $\bowtie$: Natural join: $R\bowtie S = \Pi_{distinctAttrs}\sigma_{condOnBoth}(R\times S)$. Notice that the $\times$ is \textbf{bag} version; and $\bowtie$ de-dups columns. The results $LHS\equiv RHS$, but the query plans of $LHS, RHS$ may be different. 
+Alternatively, $PLUS_{x, y\ra z}$; similarly $CONCAT, MULT, CONCAT}$. Alternative notations for extended projection
+\item $\bowtie$: Natural join: $R\bowtie S = \Pi_{distinctAttrs}\sigma_{condOnBoth}(R\times S)$. Notice that the $\times$ is \textbf{bag} version; and $\bowtie$ de-dups \textit{columns}. The results $LHS\equiv RHS$, but the query plans of $LHS, RHS$ may be different. 
 
-\item $\bowtie_{\theta}$: $= \sigma_{\theta} (R\times S)$. $\theta$ is a condition. Notice that, $\bowtie_\theta$ is \textit{not} the $\theta$ version of natural join, but the $\theta$ version of Cartesian product. It does \textit{not} de-dup columns. 
+\item $\bowtie_{\theta}$: $= \sigma_{\theta} (R\times S)$. $\theta$ is a condition. Notice that, strictly, $\bowtie_\theta$ is \textit{not} the $\theta$ version of natural join, but the $\theta$ version of Cartesian product. It does \textit{not} de-dup \textit{columns}.
+However, we usually treat $\bowtie_\theta$ as $\bowtie$, the natural join. 
 \item $\gamma$: Group and aggregation
 
 \textbf{Aggregate} functions. 
 $$
 \gamma_{attr_{grpby}, aggrFn(attr) \ra attr'}
 $$
-Alternatively, $SUM_{attr_{grpby},aggrFn(attr)\ra attr'}$, similarly $AVG, MIN, MAX, COUNT$.
+Alternatively, $SUM_{attr_{grpby},aggrFn(attr)\ra attr'}$, similarly $AVG, MIN, MAX, COUNT$. Alternative notations for group and aggregation. 
 \item $\tau$: Order by. 
 
 A result $o(exp)$ is ordered if
 \begin{enumerate}
-\item $o$ retains the originally ordered $exp$. (e.g. $\sigma$)
-\item $o$ creates ordering. (e.g. ordered by pk, then iterative joining implt with FLY)
+\item $o$ \textbf{retains} the originally ordered $exp$. (e.g. $\sigma$)
+\item $o$ \textbf{creates} ordering. (e.g. ordered by pk, then iterative joining implt with FLY)
 \end{enumerate}
 $\sigma$ may retain the order generated by $\tau$ but depends on implementation. e.g. $\sigma^\text{FLY}$ may prodeces a ordered result. Discussion: 
 
@@ -341,18 +355,16 @@ Steps:
 \item Physical Plan
 \item Example:
 \begin{itemize}
-\item \textbf{``In'' Elimination}: 
-\begin{lstlisting}
-SELECT A.a
-FROM A WHERE A.v IN (
-    SELECT B.v
-    FROM B
-    WHERE cond_b
+\item \textbf{``IN'' Elimination}: 
+\begin{pseudo}
+select A.a
+from A where A.v in (
+    select B.v from B where cond_b
 );
-\end{lstlisting}
+\end{pseudo}
 IN is transformed into $\sigma (A\times B)$. Then the basic algebra is:
 $$
-\Pi_{A.a}\ \sigma_{A.v=B.v}\quad (A \times \Pi \sigma B)
+\Pi_{A.a}\ \sigma_{A.v=B.v}\ (A \times \Pi \sigma B)
 $$
 Further optimized:
 $$
@@ -364,11 +376,11 @@ $$
 \section{Bag algebra, list algebra, and extensions}
 In this nodes, bag-version operations are assumed. 
 \begin{enumerate}
-\item Algebraic Operators (Bag Version) $\cup, \cap$
+\item $\cup, \cap$: Algebraic Operators (Bag Version)
 $$
 R\cup S
 $$
-\item Convert to set (DISTINCT)
+\item $\delta$: Convert to set (DISTINCT)
 $$
 \delta(R)
 $$
@@ -398,11 +410,11 @@ proof: $R\times S = S\times R$
 \end{align*}
 \item \rih{Logics}
 \begin{align*}
-\sigma_{cond_1\wedge cond_2}R &= \sigma_{cond_1}\ \sigma_{cond_2}R \\
-\sigma_{cond_1\vee cond_2}R &= \sigma_{cond_1}R \cup \sigma_{cond_2}R
+\sigma_{c_1\wedge c_2}R &= \sigma_{c_1}\ \sigma_{c_2}R \\
+\sigma_{c_1\vee c_2}R &= \sigma_{c_1}R \cup \sigma_{c_2}R
 \end{align*}
 \begin{flushright}, notice that $\vee$ only applies for set-version\end{flushright}
-To apply $\vee$ to bag version: 
+To apply $\vee$ to \note{bag} version: 
 \begin{align*}
 \sigma_{c_1} R \cup \sigma_{c_2} (R-\sigma_{c_1}R)
 \end{align*}
@@ -414,21 +426,21 @@ TODO
 \begin{itemize}
 \item General
 $$
-\sigma_{cond}(R\cdot S) = (\sigma_{cond} R)\cdot (\sigma_{cond} S) 
+\sigma_{c}(R\cdot S) = (\sigma_{c} R)\cdot (\sigma_{c} S) 
 $$
 \begin{flushright}, where $\cdot\in \{-, \cup, \times, \bowtie\}$. \end{flushright}
 
-\item For $\{-\}$, it can directly drop the selection: $\sigma_{cond}S$ to $S$. 
+\item For $\{-\}$, it can directly drop the selection: $\sigma_{c}S$ to $S$. 
 $$
-\sigma_{cond}(R-S) = (\sigma_{cond} R)-S
+\sigma_{c}(R-S) = (\sigma_{c} R)-S
 $$
-\item For $\{\times, \bowtie\}$, it can further drops the $\sigma_{cond}T$ to $T$ if the condition does not refer to attributes in $T$.
+\item For $\{\times, \bowtie\}$, it can further drops the $\sigma_{c}T$ to $T$ if the condition does not refer to attributes in $T$.
 \begin{align*}
-\sigma_{cond}(R\cdot S) = R\cdot (\sigma_{cond} S) 
+\sigma_{c}(R\cdot S) = R\cdot (\sigma_{c} S) 
 \end{align*}
 \end{itemize}
 
-proof: $\sigma_{A=2}(R\bowtie S) = (\sigma_{A=2}R)\bowtie S$, given commutativity and $\sigma_{cond}(R\bowtie S) = R\bowtie \sigma_{cond}S$
+proof: $\sigma_{A=2}(R\bowtie S) = (\sigma_{A=2}R)\bowtie S$, given commutativity and $\sigma_{c}(R\bowtie S) = R\bowtie \sigma_{c}S$
 \begin{align*}
 \sigma_{A=2}(R\bowtie S) = \sigma_{A=2}(S\bowtie R) = S \bowtie (\sigma_{A=2}R)=(\sigma_{A=2}R\bowtie S)
 \end{align*}
@@ -607,47 +619,49 @@ Two assumptions:
 \item $\exists$  small reations
 \end{enumerate}
 
-\chapter{Failure}
+\chapter{Failure Recovery}
 \section*{Introduction}
 Consistency. T executes 1) until completion \& 2) in isolation. 
 
 Violation of consistency: 
 \begin{enumerate}
-\item Until completion: failures $\ra$ Failure Recovery (FR)
-\item In isolation: Concurrent control with data sharing $\ra$ Concurrency Control
+\item Until completion: failures - Failure Recovery (FR)
+\item In isolation: concurrent control with data sharing - Concurrency Control
 (CC)
-\item Intersection of both $\ra$ FR $\cup$ CC
+\item Intersection of both - FR $\cup$ CC
 \end{enumerate}
 
 \section{Notations}
 Block based 
 \begin{enumerate}
-\item Input(x) = part mem := x with block 
-\item Output(x) = block := x with block
-\item Read(x,t) = t := x in block 
-\item Write(x,t) = x in block := t // write need Input(x) since block based access.
+\item Input(x) $\triangleq$ part mem := x with block 
+\item Output(x) $\triangleq$ block := x with block
+\item Read(x,t) $\triangleq$ t := x in block 
+\item Write(x,t) $\triangleq$ x in block := t // write need Input(x) since block based access.
 \end{enumerate}
 
-\section{FP Solutions}
+\section{FR Solutions}
 \subsection{Undo logging}
 Immediate write db data to disk 
 \subsubsection{Clues}
 To undo, records: 
 \begin{enumerate}
-\item \textbf{start}: start of $T_i$
-\item \textbf{prior values}: prior values of $Attrs$
-\item \textbf{commit}: commit of $T_i$
+\item \textbf{start}: $<T_i, \text{start}>$
+\item \textbf{prior values}: $<T_i, A, \text{prior}>$
+\item \textbf{commit}: $<T_i, \text{commit}>$
 \end{enumerate}
 
 \subsubsection{Undo logging rules}
 \begin{enumerate}
-\item Records prior values
-\item \textbf{Prior value log on disk before}: before x is modified on disk, log records pertaining to x must be on disk
-\item \textbf{Commit log on disk after}: before commit is flushed to log, all writes of $T$ must be reflected on disk.
+\item \textbf{Log record on disk \note{before} correspondence}: before x is modified on disk, log records pertaining to x must be on disk
+\item \textbf{Commit log on disk \note{after} all}: before commit is flushed to log, all (not any) writes of $T$ must be reflected on disk.
 \end{enumerate}
 
 \newpage
 \subsubsection{Recovery rules}
+Backward pass
+
+Process:
 \begin{pseudo}
 $S = T_i$ with start $\wedge$ ($\neg$ commit $\vee$ $\neg$ abort)
 foreach record $T_i, X, x$ reversed=true
@@ -666,20 +680,22 @@ Deferred write db data to disk.
 \subsubsection{Clues}
 To redo, records: 
 \begin{enumerate}
-\item \textbf{start}: start of $T_i$
-\item \textbf{posterior values}: posterior values of $Attrs$
-\item \textbf{commit}: commit of $T_i$
+\item \textbf{start}: $<T_i, \text{start}>$
+\item \textbf{posterior values}: $<T_i, A, \text{posterior}>$
+\item \textbf{commit}: $<T_i, \text{commit}>$
 \end{enumerate}
 
 \subsubsection{Redo logging rules}
 \begin{enumerate}
-\item Records posterior values
-\item \textbf{Posterior value log on disk before}: before x is modified on disk, log records pertaining to x must be on disk
-\item \textbf{Commit log on disk before}: before all writes of $T$ is reflected on disk, commit must flush to log.
-\item \textbf{Flush}: flush log at $T$ commit. 
+\item \textbf{Log record on disk \note{before} correspondence}: before x is modified on disk, log records pertaining to x must be on disk
+\item \textbf{Commit log on disk \note{before} any}: before any (not all) writes of $T$ is reflected on disk, commit must flush to log.
+\item \textbf{Flush}: flush log records at $T$ commit. 
 \end{enumerate}
 
 \subsubsection{Recovery rules}
+Forward pass
+
+Process: 
 \begin{pseudo}
 # no abort log
 $S = T_i$ with start $\wedge$ commit
@@ -692,7 +708,7 @@ foreach record $T_i, X, x$ reversed=false
 \subsubsection{Checkpoint}
 Redo recovery is very slow. 
 
-\subsection*{Comparison}
+\subsection*{Comparison: undo vs. redo }
 \begin{enumerate}
 \item Undo
 \begin{enumerate}
@@ -706,23 +722,19 @@ Redo recovery is very slow.
 \end{enumerate}
 
 \subsection{Undo/Redo logging}
-$T_i, X, x_{new}, x_{old}$
+$<T_i, A, \text{posterior}, \text{prior}>$
 \subsubsection{Clues}
 \begin{enumerate}
-\item \textbf{start}
-\item \textbf{prior and posterior values}
-\item \textbf{commit}
+\item \textbf{start}: $<T_i, \text{start}>$
+\item \textbf{posterior, priror values}: $<T_i, A, \text{posterior}, \text{prior}>$
+\item \textbf{commit}: $<T_i, \text{commit}>$
 \end{enumerate}
 
 \subsubsection{Undo/Redo logging rules}
 \begin{enumerate}
-\item No requirement on memory page flush $X$ w.r.t. $T_i$ commit.
-\item Records prior and posterior values
-\item \textbf{Posterior value log on disk before}: before X is modified on disk, log
-records pertaining to X must be on disk
-\item \textbf{Commit log on disk before}: before all writes of $T_i$ 
-is modified on disk, commit must flush to log.
-\item \textbf{Flush}: flush log at $T$ commit. 
+\item \textbf{Log record on disk \note{before} correspondence}: before X is modified on disk, log records pertaining to X must be on disk
+\item \textbf{Commit before any/after all}: no requirement of $X$ modified on disk w.r.t. $T_i$ commit. (i.e. X can be modified on disk before or after commit log).
+\item \textbf{Flush}: flush log records at $T$ commit. 
 \end{enumerate}
 
 \subsubsection{Recovery rules}
@@ -742,7 +754,7 @@ $S = T_i$ with start $\wedge$ commit
 \item \textbf{Schedule}: chronological order of actions 
 \item \textbf{Serial schedule}: no interleaving actions of transactions in schedule
 \item \textbf{Conflict equivalent $\equiv^c$}: $S_1 \equiv^c S_2$ if $S_1$ can be transformed into $S_2$ by swaps non-conflicting actions inter-transactions.
-\item \textbf{Conflict serializable}: a schedule $S$ is conflict serializable if $\exists SerS, SerS\text{ is a serial schedule}, S\equiv^c SerS$.
+\item \textbf{Conflict serializable}: a schedule $S$ is conflict serializable if $\exists SerS, SerS\text{ is a serial schedule } \wedge S\equiv^c SerS$.
 \end{enumerate}
 
 Only non-conflicting actions can be swapped. Unable to swap conflicting actions.
@@ -752,41 +764,54 @@ Only non-conflicting actions can be swapped. Unable to swap conflicting actions.
 \subsection{Definitions}
 Implicitly assume $i\neq j$.
 
+\textbf{Precedes}: $T_i <_S T_j$ in $S$; it is possible $T_j <_{S'} T_j$ in $S'$.
+
+\textbf{Conflict precedes}: $T_i$ precedes $T_j$ in $S$ ($T_i <_S T_j$) with conflict actions. 
+
 Graph definitions: 
 \begin{enumerate}
-\item $G = P(S)$. Directed graph 
-\item $V \triangleq \{T|T\in S\}$
-\item $E \triangleq \{T_i \ra T_j| p_i(A) <_s q_j(A) \wedge p_i(A)  \text{ conflicts } q_j(A)\}$. 
+\item $G = P(S)$. A directed graph 
+\item $V \triangleq \{T\mid T\in S\}$
+\item $E \triangleq \{T_i \ra T_j\mid p_i(A) <_s q_j(A) \wedge p_i(A)  \text{ conflicts } q_j(A)\}$. 
 \end{enumerate}
+\begin{figure}[hbtp]
+\centering
+\subfloat{\includegraphics[scale=.40]{img/precdnGraph}}
+\caption{Precedence Graph}
+\label{fig:precdnGraph}
+\end{figure}
 To construct a $P(S)$:
 \begin{pseudo}
 foreach object $A$
   foreach ordered pair $p_i(A), q_j(A)$
     if $p_i(A) \text{ conflicts } q_j(A)$
-      add $T_i \ra T_j$
+      add edge $T_i \ra T_j$
 \end{pseudo}
 \subsection{Theorem}
 \begin{enumerate}
 \item\ Lemma: 
 $$S_1 \equiv^c S_2 \Ra P(S_1)=P(S_2)$$
 \item Theorem:
-$$P(S) \text{ is acyclic} \Leftrightarrow S \text{ is conflict serializable}$$
+$$P(S) \text{ is acyclic} \Leftrightarrow S \text{ is conflict serializable } \exists serS$$
 \end{enumerate}
 \section{Lock}
 \subsection{Fundamental locking protocol}
 \subsubsection{Protocol rules}
-3 Rules: 1. Well-formed (attr) 2. Legal ($Ts$) 3. 2PL
+3 fundamental rules: 1. Well-formed (attr) 2. Legal ($Ts$) 3. 2PL
 \begin{figure}[H]
     \centerline{\includegraphics[height = 1.8in]{img/lockFundamental}}
-    \caption{Fundamental Locking Protocol}
+    \caption{Fundamental Locking Protocol: well-formed, legal, 2PL}
   \label{fig:fundamentalLockingProtocol}
 \end{figure}
 \begin{enumerate}
 \item \textbf{Well-formed}: $\forall$ R/W action. $T_i$ has to lock $l_i(A)$ before the action, and has to unlock $u_i(A)$ after the action.
 \item \textbf{Legal}: No $T_j$ can $l_j(A)$ during the time range of $l_i(A) ... u_i(A)$ of $T_i$.
-\item \textbf{2PL}: No $u_i(.)$ before $l_i(.)$ and no $l_i(.)$ after $u_i(.)$. 
+\item \textbf{2PL}: Two-phase lock, For each $T_i$, no $u_i(.)$ before $l_i(.)$ and no $l_i(.)$ after $u_i(.)$. 
 \end{enumerate}
+
 2PL may lead to deadlock, thus need to detect deadlock and abort the later transaction.
+
+Strict 2PL: $\forall R_i, W_i, u_i \cdot R_i(.)/W_i(.) <_S u_i(.) $
 
 \subsubsection{Proof}
 Prove that: under the 3 rules of the locking protocol $\Ra$ schedules $S$ conflict serializable. 
@@ -798,15 +823,15 @@ $$
 
 , where $SH(T_i)\triangleq Shrink(T_i)$, first unlock action of $T_i$.
 
-Then prove by contraction using the lemma. 
+Then prove by contradiction using the lemma. 
 \subsection{Lock Performance}
 \subsubsection{Lock modes}
-Lock modes $l\hp \L$:
+Lock modes $l\hp \mat{M}$:
 \begin{enumerate}
-\item Shared S: SS $\neg$ conflict 
-\item Exclusive X
-\item Incremental I: II $\neg$ conflict 
-\item Update U: knows $l\hp S$ will upgrade to $l\hp X$. Avoid upgrade causing deadlock.
+\item \textbf{Shared S}: SS $\neg$ conflict 
+\item \textbf{Exclusive X}
+\item \textbf{Incremental I}: II $\neg$ conflict 
+\item \textbf{Update U}: knows $l\hp S$ will upgrade to $l\hp X$. Avoid upgrade causing deadlock.
 \end{enumerate}
 Operations:
 \begin{enumerate}
@@ -836,7 +861,7 @@ Hash table + LinedList for info.
 
 
 \subsubsection{Multi-granularity}
-The object (lock target) is multi-granularity: Relation, disk block, tuple. 
+The object (lock target) is multi-granular: Relation, disk block, tuple. 
 
 I for \textbf{intent}.
 
@@ -923,18 +948,165 @@ def check($T_i$)
   return true
   
 \end{pseudo}
+\chapter{FR \& CC}
+\section{Concepts}
+Serializable $\bot$ Recoverable 
 
-\chapter{IVM, Incremental View Maintenance}
+Definitions
+\begin{enumerate}
+\item \textbf{Reads from}
 
-\section{IVM Cache}
-Capturing IVM as computation of $\Delta V^+, \Delta V^-$. 
+$T_h \Ra_S T_i, \equiv T_i$ reads from $T_h$
+
+Intuitively, 1) WR $T_h, T_i$; 2) $T_h$ hasn't aborted; 3) If $\exists$ 3rd $T_k$, $T_k$ aborted
 \begin{align*}
-\Pi_{G, H, G\#H\ra N, S}\ \gamma_{G, H; SUM(A) \ra S} R
+T_h \Ra_S T_i &\triangleq \\
+& \exists A, w_h(A) <_S r_i(A) \\
+& a_h \nless_S r_i(A) \\
+& w_h(A) <_S w_k(A) <_S r_i(A) \ra a_k <_S r_i(A)
+\end{align*}
+
+
+
+\end{enumerate}
+
+\section{RC, ACR, ST}
+Definitions:
+\begin{enumerate}
+\item \textbf{RC}: $S$ recoverable $\triangleq \forall T_i$ \textbf{commits} only after $\forall T_h$ from which it read have committed. 
+$$
+\forall T_h, T_h \Ra_s T_i \ra C_h <_S C_i
+$$
+\item \textbf{ACR}: $S$ avoids cascading rollback $\triangleq \forall T_i$ \textbf{reads} only those values written by committed $T_h$. 
+$$
+\forall T_h, T_h \Ra_s^{\text{read} A} T_i \ra C_h <_S r_i (A)
+$$
+\item \textbf{ST}: $S$ strict $\triangleq \forall T_i$ \textbf{reads} and \textbf{writes} only those values written by committed $T_h$.
+$$
+\forall T_h, [T_h \Ra_s^{\text{read} A} T_i \ra C_h <_S r_i(A)] \wedge[T_h \Ra_s^{\text{write} B} T_i \ra C_h <_S w_i(B)]
+$$
+\end{enumerate}
+
+Notice here $\ra$ is ``if'' rather than directed edge in graph. 
+
+The smaller, the more stringent. 
+\begin{figure}[H]
+\centering
+\subfloat{\includegraphics[scale=0.8]{img/FRCCDiagram}}
+\caption{Venn Diagram}
+\label{fig:FRCCDiagram}
+\end{figure}
+Connection with 2PL:
+\begin{figure}[H]
+\centering
+\subfloat{\includegraphics[scale=0.8]{img/FRCCDiagram2}}
+\caption{Venn Diagram with 2PL}
+\label{fig:FRCCDiagram}
+\end{figure}
+\chapter{IVM, Incremental View Maintenance}
+\section{Views}
+\begin{enumerate}
+\item Virtual View
+\item Materialized View
+\end{enumerate}
+
+
+\section{Joins}
+$$
+V = \mat{L} \underset{C}\bowtie \mat{R}
+$$
+
+, where $C$ is the common attribute. 
+\begin{enumerate}
+\item Mediator-based join
+\begin{enumerate}
+\item Process: Ship to mediator
+\item Issues: large traffic 
+\end{enumerate}
+\item Parameterized join
+\begin{enumerate}
+\item Process:
+\begin{pseudo}
+left = eval $Q_{\mat{L}}$
+foreach C.val in left
+  eval $Q_{\mat{R}, param=C.val}$
+\end{pseudo}
+\item Issues: multiple times of query
+\end{enumerate}
+\item Data ship join
+\begin{enumerate}
+\item Process:
+\begin{pseudo}
+left = eval $Q_{\mat{L}}$
+ship left to $\mat{R}$
+return left $\bowtie \mat{R}$ at $\mat{R}$
+\end{pseudo}
+\item Issue: traffic 
+\end{enumerate}
+\item Semijoin reduction join 
+\begin{enumerate}
+\item Process:
+\begin{pseudo}
+ship all $C.val$ of $\mat{R}$ to $\mat{L}$
+semijoin = $\mat{L} \ltimes \mat{R}$
+ship semijoin to $\mat{R}$
+return semijoin $\bowtie \mat{R}$ at $\mat{R}$
+\end{pseudo}
+\end{enumerate}
+\end{enumerate}
+\section{IVM}
+\subsection{Capturing}
+Capturing IVM as computation of $\Delta V^+, \Delta V^-$. 
+
+\subsubsection{$V$ with $\gamma$ aggregation}
+\begin{itemize}
+\item Input: $\Delta R^+, \Delta R^-$
+\item Output: delete $\Delta V^-$ from V; insert $\Delta V^+$ into V;
+\end{itemize}
+
+\begin{pseudo}
+$RG_+$ = select G, sum(A) as S from $\Delta R^+$ group by G;
+$RG_-$ = select G, sum(A) as S from $\Delta R^-$ group by G;
+$RG_{net}$ = select choose($RG_+$.G, $RG_-$.G) as G, n0($RG_+$.S)-n0($RG_-$.S) as S
+         from $RG_+ \fullouterjoin RG_-$ on $RG_+$.C=$RG_-$.C;
+$\Delta V^-$ = select * from V where G in (select G from $RG_{net}$);
+$\Delta V^+$ = select $RG_{net}$.G as G, n0(V.S)+$RG_{net}$.S as S
+        from V $\rightouterjoin RG_{net}$ on V.G=$RG_{net}$.G;
+\end{pseudo}
+
+, where choose(a,b) $\triangleq$ return a? a: b; n0(a) $\triangleq$ a? a: 0. These function definitions depend on the $\gamma$ function.
+\subsection{Methods}
+\begin{enumerate}
+\item Eager $\Delta R_i^+, \Delta R_i^-, R_i^0$
+\item Deferred $\Delta R_i^+, \Delta R_i^-, R_i^1$
+\item Self-maintained $\Delta R_i^+, \Delta R_i^-$
+\end{enumerate}
+
+\subsection{Algorithm for composing operators}
+deferred version: $R$ means $R^1$, $S$ means $S^1$
+\begin{itemize}
+\item Rule for $V = R \bowtie S$
+\begin{align*}
+\Delta V^+ &= (\Delta R^+ \bowtie S) \cup (R \bowtie \Delta S^+) - (\Delta R^+ \bowtie \Delat S^+)\\
+\Delta V^- &= (\Delta R^- \bowtie S) \cup (R \bowtie \Delta S^-) + (\Delta R^- \bowtie \Delat S^-)
+\end{align*}
+\item Rule for $V = \sigma_c R$
+\begin{align*}
+\Delta V^+ &= \sigma_c \Delta R^+\\
+\Delta V^- &= \sigma_c \Delta R^-
+\end{align*}
+\item Compositions of rules $V = T\bowtie \sigma_c W$: $\Delta V^+, \Delta V^-$ simple composition of above rules 
+\end{itemize}
+\subsection{Caching}
+\begin{align*}
+\Pi_{G, H, G\#H\ra N, S}\ \gamma_{G, H; \text{SUM}(A) \ra S} R
 \end{align*}
 
 The problem, view $V_0$ in $f^+$ is not output of aggregation $\gamma$, but the output of projection $\Pi$. 
 
-\textbf{Intermediate view on subexpression}. The solution, create an intermediate view on $\gamma$, i.e. the cache of intermediate result. 
+\textbf{Cache intermediate view on subexpression}. The solution, create an intermediate view on $\gamma$, i.e. the cache of intermediate result.
+
+\textbf{Bottom up}. From updating caches to reaching the materialized view
 
 
 \end{document}
