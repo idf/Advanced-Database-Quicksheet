@@ -134,7 +134,7 @@ $$
   $\bot$
   \begin{enumerate}
   \item Dense Index
-  \item Spare Index
+  \item Spare Index: only works on sorted key. 
   \end{enumerate}
 \item Multi-level indexes
 \item Operations on conventional index
@@ -159,7 +159,7 @@ $$
 \end{enumerate}
 \section{B+Tree}
 \subsection{Basics}
-Root node can be any size. While non-root nodes have most $n$ slots.
+\textbf{Root} node can be any size. While \textbf{non-root} nodes have most $n$ slots.
 
 \begin{tabular}{lll}
 \hline\noalign{\smallskip}
@@ -175,20 +175,57 @@ Root node can be any size. While non-root nodes have most $n$ slots.
 \item Left leaning convention 
 \item \textbf{Ptrs} is different \textbf{slots}. 
 \begin{enumerate}
-\treeitem Non-leaf: slots = ptrs - 1
-\treeitem Leaf: slots = ptrs
+\treeitem Non-leaf keys: slots = ptrs $-1 = \lceil\frac{n+1}{2}\rceil -1$
+\treeitem Leaf keys: slots = ptrs $= \lfloor\frac{n+1}{2}\rfloor$
 \end{enumerate}
 \end{itemize}
 \newpage
-\subsection{Operations}
+\subsection{Insertions}
 \textbf{Core clues}:
 \begin{enumerate}
-\item \textbf{Invariant}: children balanced or left-leaning
+\item \textbf{Split invariant}: children balanced or left-leaning
 \item \textbf{Split}: split half, thus invariant.
 \item \textbf{Leaf-Up}: \textit{no delete}, recursively move up the right node's first child; thus invariant.
 \item \textbf{Nonleaf-Up}: \textit{delete} and recursively move up the left's last if left-leaning or right's first if balanced; thus invariant. 
 \end{enumerate}
+\begin{figure}[hbtp]
+\centering
+\subfloat{\includegraphics[scale=.70]{img/btreeInsert}}
+\caption{B-tree insert, non-leaf up. n=3}
+\label{fig:btreeDelete}
+\end{figure}
+\subsection{Advanced insertions}
+Insert a list of sorted keys. 
+\begin{itemize}
+\item As \textbf{empty} as possible: reverse the order of insertion simply.
+\item As \textbf{full} as possible:
+reverse engineer the full B-tree. 
+\begin{enumerate}
+\item Full nodes can only be resulted from insertion rather than splitting
+\item Full nodes can be split to $\lceil\frac{n+1}{2}\rceil$ and $\lfloor\frac{n+1}{2}\rfloor$, if left-leaning. 
+\item Full nodes can be resulted from inserting the tail node with $\lfloor\frac{n+1}{2}\rfloor$.
+\end{enumerate}
+Therefore, the the reverse engineer process is:
+\begin{enumerate}
+\item Reverse insertion on each full leaf nodes, usually the last key. 
+\item Reverse splitting result $\lceil\frac{n+1}{2}\rceil$$\lfloor\frac{n+1}{2}\rfloor$ to the original tail nodes of $\lfloor\frac{n+1}{2}\rfloor$. 
+\end{enumerate}
+\end{itemize}
 
+\subsection{Deletion}
+\textbf{Cire clues}:
+\begin{enumerate}
+\item \textbf{Invariant}: children $\lceil\frac{n+1}{2}\rceil, \lfloor\frac{n+1}{2}\rfloor$
+\item \textbf{Fuse}: fuse remaining to left sibling, if left not full. \textit{Delete} upper level. 
+\item \textbf{Redistribute}: Extract the last key of left sibling, if left full. \textit{Adjust} upper level.
+\item \textbf{Non-leaf fuse}: fuse remaining to left sibling, if left not full. \textit{Move down} the upper level. 
+\end{enumerate}
+\begin{figure}[hbtp]
+\centering
+\subfloat{\includegraphics[scale=.60]{img/btreeDelete}}
+\caption{B-tree delete, non-leaf fuse/coalese. n=4}
+\label{fig:btreeDelete}
+\end{figure}
 \section{Hash}
 \subsection{Extensible hashing}
 Core clues:
@@ -285,7 +322,9 @@ Notations:
 \item $\Pi$: Projection, \textit{select} (attributes)
 \item $x\ra y$: Extended projection, rename $x$ to $y$. Scalar func: $a+b\ra y$, String ops: $c||d \ra y$
 
-\textbf{Scalar} functions: their input comes from the same tuple (as opp. \textbf{aggregate}). Notice that $\Pi_{x\ra y} R$ is to project R to x first and to apply the transformation. 
+\textbf{Scalar} functions: their input comes from the same tuple (as opp. \textbf{aggregate}). 
+
+Notice that $\Pi_{x\ra y} R$ is to project R to x first and to apply the transformation; thus only column $y$ remains. 
 $$
 \Pi_{x, y\ra z, x+y\ra w} R
 $$
@@ -351,7 +390,7 @@ $$
 $\bowtie^\text{RI}$ Right Index Join. 
 Steps:
 \begin{itemize}
-\item $\sigma$ uses index to get tuples based on condition on $R$. 
+\item $\sigma^{\text{INDEX}}$ uses index to get tuples based on condition on $R$. 
 \item $\bowtie^\text{RI}$. For each tuple in the result $R$:
 \begin{itemize}
 \item Match $S$'s tuple using $S$'s index, in $O(1)$. 
@@ -378,9 +417,17 @@ IN is transformed into $\sigma (A\times B)$. Then the basic algebra is:
 $$
 \Pi_{A.a}\ \sigma_{A.v=B.v}\ (A \times \Pi \sigma B)
 $$
-Further optimized:
+further optimized:
 $$
 \Pi_{A.a}(A \underset{A.v=B.v}\bowtie \Pi \sigma B)
+$$
+\item \textbf{``NOT IN'' Elimination}:
+$$
+\Pi_{A.a} [A - \sigma_{A.v=B.v} (A\times \Pi\sigma B)]
+$$
+further optimized:
+$$
+\Pi_{A.a}[A-A\underset{A.v=B.v}\bowtie \Pi\sigma B}]
 $$
 
 \end{itemize}
@@ -470,16 +517,18 @@ This is a technique of proof by using axioms.
 
 \rih{Combine $\pi$ \& $\sigma$}
 
-\item \rih{Push down $\pi$} 
+\item \rih{Push down $\pi$ - Supperset $\pi$} 
  
 \begin{align*}
 & \pi_x (R \cup S) = \pi_x R \cup \pi_x S \\
+& \pi_x (R\cap S) \neq \pi_x R \cap \pi_x S\\
+& \pi_x (R-S) \neq \pi_x R - \pi_x S\\
 & \pi_a (R \times S) = \pi_a (\pi_{c_1 \supseteq a}R \times \pi_{c_2 \supseteq a} S) \\
 & \pi_a (R \bowtie S) = \pi_a(\pi_{c_1 \supseteq (a \cup R.c)}\ R \bowtie \pi_{c_2 \supseteq (a\cup S.c)}\ S) \\
 & \pi_x R = \pi_x \pi_{y\supseteq x} R
 \end{align*}
 \begin{itemize}
-\item Supper set for conditions in $\pi$.
+\item Supperset for conditions in $\pi$.
 \item $\pi$ can reduce the length of a tuple; thus it is useful to push down $\pi$ to fit more tuples in memory. When denoting $\supset, \supseteq, \subset, \subseteq$, it is for AND composite. $cond1\supseteq a$ is a shorthand notation for $\{c_1|c_1 \supseteq a\}$, a notation for superset. 
 \item \rih{Difference}. Notice that, $\pi_a (R-S) \neq \pi_a R - \pi_a S$ 
 \item \rih{Push down priority of $\pi, \sigma$}. Normally $\sigma$ is given higher priority than $\pi$ if $\sigma$ can do index selection to avoid $\pi$ on all tuples (Section - \ref{sec:queryExec})
@@ -522,7 +571,7 @@ Notice:
 $M$ for blocks rather than bytes size. 
 
 \begin{enumerate}
-\item Iteration join (one pass)
+\item $\bowtie^{\text{1P}}$ Iteration join (one pass)
 
 \textbf{Requirement}. $\min(B(R), B(S)) < M$
 
@@ -571,6 +620,7 @@ time = \left\{ \begin{array}{rl}
 \begin{itemize}
 \item $1+...$, the 1 for \textit{index block access} to the non-cached leaf nodes of the B-tree index 
 \item Create index (normally already created): read blocks and write index $B(S)+B(index)$
+\item $\sigma^{\text{RI}}$ will pay off when $B(S)$ and $V(S,B)$ are gigantic. 
 \end{itemize}
 \item $\bowtie^\text{HASH}$ Hash join 
 
@@ -592,6 +642,7 @@ time = \left\{ \begin{array}{rl}
   2B(R)+2B(S) &\text{// if input pipeline}\\
        \end{array} \right.
 \end{eqnarray*}
+Hash join is similar to sort-merge join. 
 \end{enumerate}
 
 \subsubsection{Analysis}
@@ -650,7 +701,7 @@ $$
 \end{itemize}
 \subsection{Plan Enumeration}
 \subsubsection{Hypergraph}
-INGRES greedy heuristic search. 
+INGRES \textit{greedy} heuristic search. 
 
 Small relation $\triangleq \sigma R$  
 
