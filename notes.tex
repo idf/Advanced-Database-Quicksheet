@@ -150,7 +150,7 @@ $$
   
   Solutions:
     \begin{enumerate}
-    \item Multiple index ptrs
+    \item multiple index ptrs
     \item variable size of index list 
     \item chaining records 
     \item bucket (most used)
@@ -165,7 +165,7 @@ Root node can be any size. While non-root nodes have most $n$ slots.
 \hline\noalign{\smallskip}
 \textbf{Attrs} & \textbf{Non-leaf} & \textbf{Leaf} \\
 \noalign{\smallskip}\hline\noalign{\smallskip}
-Ptrs & \lceil\frac{n+1}{2}\rceil & \lfloor\frac{n+1}{2}\rfloor \\
+\textit{Ptrs} & \lceil\frac{n+1}{2}\rceil & \lfloor\frac{n+1}{2}\rfloor \\
 \noalign{\smallskip}\hline\noalign{
 \caption{Non-root bodes at least half-full}
 \end{tabular}
@@ -173,6 +173,11 @@ Ptrs & \lceil\frac{n+1}{2}\rceil & \lfloor\frac{n+1}{2}\rfloor \\
 \begin{itemize}
 \item Follow the range convention of $[a, b)$.
 \item Left leaning convention 
+\item \textbf{Ptrs} is different \textbf{slots}. 
+\begin{enumerate}
+\treeitem Non-leaf: slots = ptrs - 1
+\treeitem Leaf: slots = ptrs
+\end{enumerate}
 \end{itemize}
 \newpage
 \subsection{Operations}
@@ -202,11 +207,18 @@ Core clues:
         \caption{Extensible Hashing}
     \label{fig:extensibleHashing}
 \end{figure}
+TODO: initial state of extensible hashing 
 \subsection{Linear Hashing}
+Extensible hashing is exponentially expanding the index; while linear hashing  linearly. 
 \begin{figure}[H]
-        \centerline{\includegraphics[height = 1in]{img/linearhashing}}
-        \caption{Linear Hashing}
-    \label{fig:linearHashing}
+    \centerline{\includegraphics[height = 1in]{img/linearhashing}}
+    \caption{Linear Hashing}
+  \label{fig:linearHashing}
+\end{figure}
+\begin{figure}[H]
+    \centerline{\includegraphics[height = 1.5in]{img/linearHahsing2}}
+    \caption{Linear Hashing, overflow ptrs}
+  \label{fig:linearHashing2}
 \end{figure}
 Definitions:
 \begin{itemize}
@@ -507,7 +519,7 @@ Notice:
 \item \textbf{Cost model}. Time of execution is measured by number of disk IOs. 
 \end{itemize}
 
-
+$M$ for blocks rather than bytes size. 
 
 \begin{enumerate}
 \item Iteration join (one pass)
@@ -516,13 +528,21 @@ Notice:
 
 \textbf{Time}. Load a table to memory, and then loop join. Assumption $\min(B(R), B(S))<M$; thus
 $$B(R)+B(S)$$
-\item $\bowtie^\text{SM}$ Merge join 
+\item $\bowtie^\text{SM}$ Merge join (two passes)
 
 \textbf{Process.} Two phases:
 \begin{enumerate}
-\item Sort-merge phase. \textbf{Mem} req: $|R|/M<M; |S|/M<M$
+\item Sort-merge phase. \textbf{Mem} req: $|R|/M<M; |S|/M<M $
 \item Merge-join phase. \textbf{Mem} req: $|R|/M+|S|/M <M$
+
+Thus,
+$$
+M>\sqrt{\max{(|R|,|S|)}}
+$$
 \end{enumerate}
+
+, where $|X|\triangleq B(X)$
+
 Possible to combine the merge 
 
 \textbf{Time.} \textbf{Sort}: 1 read 1 write. \textbf{Merge}: 1 read; thus 
@@ -554,7 +574,11 @@ time = \left\{ \begin{array}{rl}
 \end{itemize}
 \item $\bowtie^\text{HASH}$ Hash join 
 
-\textbf{Requirement.} $\min\big(B(R_{i}), B(S_{i}})\big) <M$. The smaller \textit{bucket} need to fit in mem when join the bucket. 
+\textbf{Requirement.} $\min\big(B(R_{i}), B(S_{i}})\big) <M$. The smaller \textit{bucket} need to fit in mem when join the bucket. There are $M-1$ buckets $R_i, S_i$, thus
+\begin{align*}
+M &\geq \frac{\min(|R|, |S|)}{M-1} \\
+M &> \sqrt{\min(|R|, |S|)}
+\end{align*}
 
 \textbf{Process.} Two phases
 \begin{enumerate}
@@ -602,7 +626,7 @@ V(R_1\times R_2) \approx V(R_1, A)
 $$
 Corner case: $R_2=\phi$, then RHS should be 0. But, in size estimation, doesn't consider the corner case. Normally, only the average case (uniform distr.) is considered. 
 \end{itemize}
-\rih{Estimate for $\bowtie$}
+\rih{Size estimation for $\bowtie$}
 \begin{itemize}
 \item Assumption: either $\pi_{A}R_1 \subseteq \pi_{A}R_2$ or $\pi_{A}R_1 \supseteq \pi_{A}R_2$.
 Notice the assumption may be violatd. 
@@ -670,8 +694,8 @@ To undo, records:
 
 \subsubsection{Undo logging rules}
 \begin{enumerate}
-\item \textbf{Log record on disk \note{before} correspondence}: before x is modified on disk, log records pertaining to x must be on disk
-\item \textbf{Commit log on disk \note{after} all}: before commit is flushed to log, all (not any) writes of $T$ must be reflected on disk.
+\item \unibox{\textbf{Log record on disk \note{before} correspondence}}: before x is modified on disk, log records pertaining to x must be on disk
+\item \unibox{\textbf{Commit log on disk \note{after} all}}: before commit is flushed to log, all (not any) writes of $T$ must be reflected on disk.
 \end{enumerate}
 
 \newpage
@@ -704,9 +728,9 @@ To redo, records:
 
 \subsubsection{Redo logging rules}
 \begin{enumerate}
-\item \textbf{Log record on disk \note{before} correspondence}: before x is modified on disk, log records pertaining to x must be on disk
-\item \textbf{Commit log on disk \note{before} any}: before any (not all) writes of $T$ is reflected on disk, commit must flush to log.
-\item \textbf{Flush}: flush log records at $T$ commit. 
+\item \unibox{\textbf{Log record on disk \note{before} correspondence}}: before x is modified on disk, log records pertaining to x must be on disk
+\item \unibox{\textbf{Commit log on disk \note{before} any}}: before any (not all) writes of $T$ is reflected on disk, commit must flush to log.
+\item \unibox{\textbf{Flush}}: flush log records at $T$ commit. 
 \end{enumerate}
 
 \subsubsection{Recovery rules}
@@ -749,9 +773,9 @@ $<T_i, A, \text{posterior}, \text{prior}>$
 
 \subsubsection{Undo/Redo logging rules}
 \begin{enumerate}
-\item \textbf{Log record on disk \note{before} correspondence}: before X is modified on disk, log records pertaining to X must be on disk
-\item \textbf{Commit before any/after all}: no requirement of $X$ modified on disk w.r.t. $T_i$ commit. (i.e. X can be modified on disk before or after commit log).
-\item \textbf{Flush}: flush log records at $T$ commit. 
+\item \unibox{\textbf{Log record on disk \note{before} correspondence}}: before X is modified on disk, log records pertaining to X must be on disk
+\item \unibox{\textbf{Commit before any/after all}}: no requirement of $X$ modified on disk w.r.t. $T_i$ commit. (i.e. X can be modified on disk before or after commit log).
+\item \unibox{\textbf{Flush}}: flush log records at $T$ commit. 
 \end{enumerate}
 
 \subsubsection{Recovery rules}
@@ -845,10 +869,10 @@ Then prove by contradiction using the lemma.
 \subsubsection{Lock modes}
 Lock modes $l\hp \mat{M}$:
 \begin{enumerate}
-\item \textbf{Shared S}: SS $\neg$ conflict 
-\item \textbf{Exclusive X}
-\item \textbf{Incremental I}: II $\neg$ conflict 
-\item \textbf{Update U}: knows $l\hp S$ will upgrade to $l\hp X$. Avoid upgrade causing deadlock.
+\treeitem \textbf{Shared S}: SS $\neg$ conflict 
+\treeitem \textbf{Exclusive X}
+\treeitem \textbf{Incremental I}: II $\neg$ conflict 
+\treeitem \textbf{Update U}: knows $l\hp S$ will upgrade to $l\hp X$. Avoid upgrade causing deadlock.
 \end{enumerate}
 Operations:
 \begin{enumerate}
