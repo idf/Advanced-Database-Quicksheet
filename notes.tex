@@ -244,7 +244,7 @@ Core clues:
         \caption{Extensible Hashing}
     \label{fig:extensibleHashing}
 \end{figure}
-TODO: initial state of extensible hashing 
+Initial state of extensible hashing: $i=0$, index $\phi$, 1 ptr to a single block. After $i=1$, index entry $0, 1$; 2 ptrs. 
 \subsection{Linear Hashing}
 Extensible hashing is exponentially expanding the index; while linear hashing  linearly. 
 \begin{figure}[H]
@@ -559,6 +559,24 @@ The \note{breakthrough} points:
 
 \section{Algorithms for Relational Algebra Operators}
 \subsection{Query Execution}\label{sec:queryExec}
+\subsubsection{Implementation of $\sigma$}
+\begin{enumerate}
+\item $\sigma^\text{INDEX}_{A=c}$ 
+\begin{eqnarray*}
+time = \left\{ \begin{array}{rl}
+  \frac{B(R)}{V(R, A)} &\text{// if tuple clustered on $A$, default }\\
+  \frac{T(R)}{V(R, A)} &\text{// if tuple not clustered on $A$}
+       \end{array} \right.
+\end{eqnarray*}
+Normally pipelined version of $\sigma^\text{INDEX}_{A=c}$ is impossible 
+\item $\sigma^\text{SCAN}_{A=c}$
+\begin{eqnarray*}
+time = \left\{ \begin{array}{rl}
+  B(R) &\text{// if normal }\\
+  0 &\text{// if pipeline}
+       \end{array} \right.
+\end{eqnarray*}
+\end{enumerate}
 \subsubsection{Implementations of $\bowtie$}
 
 Notice:
@@ -573,10 +591,18 @@ $M$ for blocks rather than bytes size.
 \begin{enumerate}
 \item $\bowtie^{\text{1P}}$ Iteration join (one pass)
 
-\textbf{Requirement}. $\min(B(R), B(S)) < M$
+\textbf{Requirement}. As long as any of the two can fit into the memory. 
+$$
+\min(B(R), B(S)) < M
+$$
 
-\textbf{Time}. Load a table to memory, and then loop join. Assumption $\min(B(R), B(S))<M$; thus
-$$B(R)+B(S)$$
+\textbf{Time}. Load a table to memory, and then loop join, thus
+\begin{eqnarray*}
+time = \left\{ \begin{array}{rl}
+  B(R)+B(S) &\text{// if normal }\\
+  0+B(S) &\text{// if pipeline}
+       \end{array} \right.
+\end{eqnarray*}
 \item $\bowtie^\text{SM}$ Merge join (two passes)
 
 \textbf{Process.} Two phases:
@@ -584,7 +610,7 @@ $$B(R)+B(S)$$
 \item Sort-merge phase. \textbf{Mem} req: $|R|/M<M; |S|/M<M $
 \item Merge-join phase. \textbf{Mem} req: $|R|/M+|S|/M <M$
 
-Thus,
+Thus, all sqrt can fit into memory. 
 $$
 M>\sqrt{\max{(|R|,|S|)}}
 $$
@@ -598,25 +624,35 @@ Possible to combine the merge
 \begin{eqnarray*}
 time = \left\{ \begin{array}{rl}
   3B(R)+3B(S) &\text{// if normal} \\
-  3B(R)+B(S) &\text{// if S sorted on attr} \\
-  2B(R)+2B(S) &\text{// if input pipeline}\\
-  2B(R) &\text{// if input pipeline and S sorted}
+  B(R)+3B(S) &\text{// if $R$ sorted on attr} \\
+  2B(R)+3B(S) &\text{// if input pipeline on $R$}\\
+  0+3B(S) &\text{// if input pipeline on $R$ and $R$ sorted}
        \end{array} \right.
 \end{eqnarray*}
+Multiple times of $\bowtie^\text{SM}$, but may not sorted on the same attr. 
 \item $\bowtie^\text{RI}, \bowtie^\text{INDEX}$ Index join 
 
 \textbf{Difference.} btw RI and INDEX: $\bowtie^\text{RI}$ uses only 1 index; while $\bowtie^\text{INDEX}$ uses 2 indexes, thus it can process on indexes first (ptr), delaying the block access to data. 
 
-\textbf{Time \& Mem.} when \textit{no} relation fits in mem, $\bowtie^{RI}$ outperforms $\forall$ any other technique. 
+\textbf{Time \& Mem.} when \textit{no} relation fits in mem, $\bowtie^{RI}$ outperforms $\forall$ any other technique, even for 1Pass.  
 
 \textbf{Cost}. It reads $B(R)$; for each $T(R)$, loads $\lceil B(S)/V(S, B)\rceil$ blocks according to the index; thus 
 \begin{eqnarray*}
-time = \left\{ \begin{array}{rl}
-  B(R)+T(R)\cdot \big(1+\frac{B(S)}{V(S, B)}\big) &\text{// if normal} \\
-  T(R)\cdot \big(1+\frac{B(S)}{V(S, B)}\big) &\text{// if input pipeline}\\
+time_\text{clustedIndex} = \left\{ \begin{array}{rl}
+  B(R)+T(R)\cdot \frac{B(S)}{V(S, B)} &\text{// if normal} \\
+  T(R)\cdot \frac{B(S)}{V(S, B)} &\text{// if input pipeline}\\
        \end{array} \right.
 \end{eqnarray*}
-
+\begin{eqnarray*}
+time_\text{scatteredIndex} = \left\{ \begin{array}{rl}
+  B(R)+T(R)\cdot \Big(1+\frac{T(S)}{V(S, B)}\Big) &\text{// if normal} \\
+  T(R)\cdot \Big(1+\frac{T(S)}{V(S, B)}\Big)} &\text{// if input pipeline}\\
+       \end{array} \right.
+\end{eqnarray*}
+If index or sorted on common attr R.C, de-duplication possible; thus change
+$$
+T(R) \ra V(R)
+$$
 \begin{itemize}
 \item $1+...$, the 1 for \textit{index block access} to the non-cached leaf nodes of the B-tree index 
 \item Create index (normally already created): read blocks and write index $B(S)+B(index)$
@@ -639,7 +675,7 @@ M &> \sqrt{\min(|R|, |S|)}
 \begin{eqnarray*}
 time = \left\{ \begin{array}{rl}
   3B(R)+3B(S) &\text{// if normal} \\
-  2B(R)+2B(S) &\text{// if input pipeline}\\
+  2B(R)+3B(S) &\text{// if input pipeline on $R$}\\
        \end{array} \right.
 \end{eqnarray*}
 Hash join is similar to sort-merge join. 
@@ -653,7 +689,7 @@ Hash join is similar to sort-merge join.
 \item 1-pass on sorted table, result may also be sorted (depends).
 \item sort-merge will produce sorted result
 \end{enumerate}
-\item \textbf{Intermediate non-index.} Intermediate results do not have index. 
+\item \textbf{Intermediate non-index.} Intermediate results do not have index; unless otherwise stated.  
 \item \textbf{Cost algorithm.} calculate time $\leftarrow$ calculate the \# disk IO $\leftarrow$ \# blocks $B(R)$ $\leftarrow$ intermediate tuple size $T(R)$. 
 \end{enumerate}
 \subsection{Cost analysis (intermediate size)}
@@ -710,8 +746,22 @@ Two assumptions:
 \item $\forall$ join attr, index on it
 \item $\exists$  small reations
 \end{enumerate}
+Left-deep algebraic expression.
+\subsection{Analyze query processing}
+Process:
+\begin{enumerate}
+\item Relationship hypergraph for visualization. 
+\item Preprocess memory inforamtion 
+\item Def shorthand notations for conditions. 
+\item Draw the parse tree. 
+\item Calculate $B(.), T(.)$, tuple per block alternately. Notice $S(.)$ affects tuple per block. 
 
-\chapter{Failure Recovery}
+Given $R$ is $a$ tuples per block, $S$ is $b$ tuple per block. Then $R\bowtie S$ is $$
+\frac{1}{\frac{1}{a}+\frac{1}{b}} 
+$$
+per block. 
+\end{enumerate}
+\chapter{Failure Recovery (FR)}
 \section*{Introduction}
 Consistency. T executes 1) until completion \& 2) in isolation. 
 
@@ -745,8 +795,8 @@ To undo, records:
 
 \subsubsection{Undo logging rules}
 \begin{enumerate}
-\item \unibox{\textbf{Log record on disk \note{before} correspondence}}: before x is modified on disk, log records pertaining to x must be on disk
-\item \unibox{\textbf{Commit log on disk \note{after} all}}: before commit is flushed to log, all (not any) writes of $T$ must be reflected on disk.
+\item \unibox{\textbf{Log record on disk \note{BEFORE} correspondence}}: before x is modified on disk, log records pertaining to x must be on disk
+\item \unibox{\textbf{Commit log on disk \note{AFTER} all}}: before commit is flushed to log, all (not any) writes of $T$ must be reflected on disk.
 \end{enumerate}
 
 \newpage
@@ -779,8 +829,8 @@ To redo, records:
 
 \subsubsection{Redo logging rules}
 \begin{enumerate}
-\item \unibox{\textbf{Log record on disk \note{before} correspondence}}: before x is modified on disk, log records pertaining to x must be on disk
-\item \unibox{\textbf{Commit log on disk \note{before} any}}: before any (not all) writes of $T$ is reflected on disk, commit must flush to log.
+\item \unibox{\textbf{Log record on disk \note{BEFORE} correspondence}}: before x is modified on disk, log records pertaining to x must be on disk
+\item \unibox{\textbf{Commit log on disk \note{BEFORE} any}}: before any (not all) writes of $T$ is reflected on disk, commit must flush to log.
 \item \unibox{\textbf{Flush}}: flush log records at $T$ commit. 
 \end{enumerate}
 
@@ -824,7 +874,7 @@ $<T_i, A, \text{posterior}, \text{prior}>$
 
 \subsubsection{Undo/Redo logging rules}
 \begin{enumerate}
-\item \unibox{\textbf{Log record on disk \note{before} correspondence}}: before X is modified on disk, log records pertaining to X must be on disk
+\item \unibox{\textbf{Log record on disk \note{BEFORE} correspondence}}: before X is modified on disk, log records pertaining to X must be on disk
 \item \unibox{\textbf{Commit before any/after all}}: no requirement of $X$ modified on disk w.r.t. $T_i$ commit. (i.e. X can be modified on disk before or after commit log).
 \item \unibox{\textbf{Flush}}: flush log records at $T$ commit. 
 \end{enumerate}
@@ -838,8 +888,19 @@ $S = T_i$ with start $\wedge$ commit
 
 \subsubsection{Checkpoint - Non-quiesce}
 
+\subsection{Summary}
+\begin{tabular}{llll}
+\hline\noalign{\smallskip}
+\textbf{Req.} & \textbf{Undo} & \textbf{Redo} & \textbf{Undo/Redo}\\
+\noalign{\smallskip}\hline\noalign{\smallskip}
+\textbf{Log record} & before corr & before corr & before corr\\
+\textbf{Log commit} & after all & before any & $\phi$\\
+\textbf{Flush} & $\phi$ & at $T$ commit & at $T$ commit\\
+\noalign{\smallskip}\hline\noalign{\smallskip}
+\caption{FR logging}
+\end{tabular}
 
-\chapter{Concurrency Control}
+\chapter{Concurrency Control (CC)}
 \section{Concepts}
 \begin{enumerate}
 \item \textbf{Conflict actions}: RW, WR, WW. e.g. RW is $R_i(A); W_j(A)$. Different transactions' action on the same attr. 
@@ -892,7 +953,7 @@ $$P(S) \text{ is acyclic} \Leftrightarrow S \text{ is conflict serializable } \e
 3 fundamental rules: 1. Well-formed (attr) 2. Legal ($Ts$) 3. 2PL
 \begin{figure}[H]
     \centerline{\includegraphics[height = 1.8in]{img/lockFundamental}}
-    \caption{Fundamental Locking Protocol: well-formed, legal, 2PL}
+    \caption{Fundamental Locking Protocol: well-formed, legal, 2PL $\Ra$ conflict serializable}
   \label{fig:fundamentalLockingProtocol}
 \end{figure}
 \begin{enumerate}
@@ -971,7 +1032,7 @@ Compatibility matrix:
 IS & IS S \\
 IX & all \\
 S & [IS S] \\
-SIX & IX X [SIX] \\
+SIX & IX X [SIX, IS, S] \\
 X & none\\
 \noalign{\smallskip}\hline\noalign{\smallskip}
 \caption{Hierarchy & [.] for not necessary}
@@ -1043,13 +1104,20 @@ def check($T_i$)
 \section{Concepts}
 Serializable $\bot$ Recoverable 
 
+Notice here $\ra$ is ``if'' rather than directed edge in graph. 
+
 Definitions
 \begin{enumerate}
 \item \textbf{Reads from}
 
-$T_h \Ra_S T_i, \equiv T_i$ reads from $T_h$
+$T_h \Ra_S T_i \equiv T_i$ reads from $T_h$
 
-Intuitively, 1) WR $T_h, T_i$; 2) $T_h$ hasn't aborted; 3) If $\exists$ 3rd $T_k$, $T_k$ aborted
+Intuitively, $T_h \Ra_S T_i$
+\begin{enumerate}
+\treeitem WR $T_h, T_i$;
+\treeitem $T_h$ hasn't aborted; 
+\treeitem If $\exists$ 3rd $T_k$, $T_k$ aborted
+\end{enumerate}
 \begin{align*}
 T_h \Ra_S T_i &\triangleq \\
 & \exists A, w_h(A) <_S r_i(A) \\
@@ -1064,23 +1132,22 @@ T_h \Ra_S T_i &\triangleq \\
 \section{RC, ACR, ST}
 Definitions:
 \begin{enumerate}
-\item \textbf{RC}: $S$ recoverable $\triangleq \forall T_i$ \textbf{commits} only after $\forall T_h$ from which it read have committed. 
+\item \textbf{RC}: $S$ recoverable $\triangleq \forall T_i$ \unibox{\textbf{commits}} only after $\forall T_h$ from which it read have committed. 
 $$
 \forall T_h, T_h \Ra_s T_i \ra C_h <_S C_i
 $$
-\item \textbf{ACR}: $S$ avoids cascading rollback $\triangleq \forall T_i$ \textbf{reads} only those values written by committed $T_h$. 
+\item \textbf{ACR}: $S$ avoids cascading rollback $\triangleq \forall T_i$ \unibox{\textbf{reads}} only those values written by committed $T_h$. 
 $$
 \forall T_h, T_h \Ra_s^{\text{read} A} T_i \ra C_h <_S r_i (A)
 $$
-\item \textbf{ST}: $S$ strict $\triangleq \forall T_i$ \textbf{reads} and \textbf{writes} only those values written by committed $T_h$.
+\item \textbf{ST}: $S$ strict $\triangleq \forall T_i$ \unibox{\textbf{reads} \& \textbf{writes}} only those values written by committed $T_h$.
 $$
 \forall T_h, [T_h \Ra_s^{\text{read} A} T_i \ra C_h <_S r_i(A)] \wedge[T_h \Ra_s^{\text{write} B} T_i \ra C_h <_S w_i(B)]
 $$
 \end{enumerate}
 
-Notice here $\ra$ is ``if'' rather than directed edge in graph. 
-
 The smaller, the more stringent. 
+ 
 \begin{figure}[H]
 \centering
 \subfloat{\includegraphics[scale=0.8]{img/FRCCDiagram}}
@@ -1094,6 +1161,14 @@ Connection with 2PL:
 \caption{Venn Diagram with 2PL}
 \label{fig:FRCCDiagram}
 \end{figure}
+By convention serial $\ra$ 2PL
+
+Strict 2PL: $\forall X, c_i <_S u_i(X)$. 
+
+\begin{align*}
+\text{serial} \ra \text{strict 2PL} \ra \text{strict} &\ra \text{2PL} \xrightarrow{\text{well-formed \& legal}}\text{conflict serializable}\\
+&\ra \text{ACR} 
+\end{align*}
 \chapter{IVM, Incremental View Maintenance}
 \section{Views}
 \begin{enumerate}
@@ -1166,6 +1241,9 @@ $\Delta V^+$ = select $RG_{net}$.G as G, n0(V.S)+$RG_{net}$.S as S
 \end{pseudo}
 
 , where choose(a,b) $\triangleq$ return a? a: b; n0(a) $\triangleq$ a? a: 0. These function definitions depend on the $\gamma$ function.
+
+Modification on $\Delta V^+$: a possible fix is that the query computing the $\Delta V^+$ should include an EXISTS that checks whether the G value actually still appears in the table R.
+
 \subsection{Methods}
 \begin{enumerate}
 \item Eager $\Delta R_i^+, \Delta R_i^-, R_i^0$
@@ -1178,8 +1256,8 @@ deferred version: $R$ means $R^1$, $S$ means $S^1$
 \begin{itemize}
 \item Rule for $V = R \bowtie S$
 \begin{align*}
-\Delta V^+ &= (\Delta R^+ \bowtie S) \cup (R \bowtie \Delta S^+) - (\Delta R^+ \bowtie \Delat S^+)\\
-\Delta V^- &= (\Delta R^- \bowtie S) \cup (R \bowtie \Delta S^-) + (\Delta R^- \bowtie \Delat S^-)
+\Delta V^+ &= (\Delta R^+ \bowtie S) \cup (R \bowtie \Delta S^+) - (\Delta R^+ \bowtie \Delat \Delta S^+)\\
+\Delta V^- &= (\Delta R^- \bowtie S) \cup (R \bowtie \Delta S^-) \cup (\Delta R^- \bowtie \Delat \Delta S^-)
 \end{align*}
 \item Rule for $V = \sigma_c R$
 \begin{align*}
@@ -1188,6 +1266,13 @@ deferred version: $R$ means $R^1$, $S$ means $S^1$
 \end{align*}
 \item Compositions of rules $V = T\bowtie \sigma_c W$: $\Delta V^+, \Delta V^-$ simple composition of above rules 
 \end{itemize}
+eager version: $R$ means $R^0$, $S$ means $S^0$. Can derive eager version from deferred version:
+\begin{align*}
+\Delta V^+ &= (\Delta R^+ \bowtie S) \cup (R \bowtie \Delta S^+) \cup (\Delta R^+ \bowtie
+\Delat \Delta S^+)\\
+\Delta V^- &= (\Delta R^- \bowtie S) \cup (R \bowtie \Delta S^-) - (\Delta R^- \bowtie
+\Delat \Delta S^-)
+\end{align*}
 \subsection{Caching}
 \begin{align*}
 \Pi_{G, H, G\#H\ra N, S}\ \gamma_{G, H; \text{SUM}(A) \ra S} R
