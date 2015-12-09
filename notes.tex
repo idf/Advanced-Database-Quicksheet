@@ -45,18 +45,18 @@
 \section*{Acronyms}
 \
 \begin{obeylines}
-\rih{Attr}. Attributes 
+\rih{Attr}. Attributes
 \rih{Ptr}. Pointer
-\rih{Mgt}. Management 
+\rih{Mgt}. Management
 \rih{idx}. Access key to array, that is array index; but it is not the database index.
-\rih{est}. Estimate. 
+\rih{est}. Estimate.
 \rih{$\bot$}. Independent
 
 \end{obeylines}
 \chapter{Introduction}
 \begin{itemize}
-\item Basic SQLs 
-\item \rih{ACID}: Atomicity, Consistency, Isolation, Durability 
+\item Basic SQLs
+\item \rih{ACID}: Atomicity, Consistency, Isolation, Durability
 \begin{enumerate}
 \item Atomicity: each transaction be "all or nothing".
 \item Consistency: any transaction will bring the database from one valid state to
@@ -64,7 +64,7 @@ another.
 \item Isolation: the concurrent execution of transactions results in a system state
 that would be obtained if transactions were executed serially
 \item Durability: once a transaction has been committed, it will remain so, even in
-the event of power loss, crashes, or 
+the event of power loss, crashes, or
 \end{enumerate}
 \item Transaction Mgt
 \item Database System Architecture. Fig:
@@ -79,17 +79,17 @@ the event of power loss, crashes, or
 
 \chapter{Hardware}
 \begin{itemize}
-\item Memory Hierarchy 
+\item Memory Hierarchy
 \begin{enumerate}
-\item Blocked-based access 
-\item Different Rates of Improvement 
+\item Blocked-based access
+\item Different Rates of Improvement
 \end{enumerate}
-\item Tuned for blocks: Two-Phase, Multiway \textbf{MergeSort} (TPMMS). 
+\item Tuned for blocks: Two-Phase, Multiway \textbf{MergeSort} (TPMMS).
 \begin{enumerate}
-\item Phase 1: Load db and sort into multiple lists 
-\item Phase 2: Merge multiple lists 
+\item Phase 1: Load db and sort into multiple lists
+\item Phase 2: Merge multiple lists
 
-Upper data size: 
+Upper data size:
 $$
 \frac{M^2}{B}
 $$
@@ -100,19 +100,19 @@ $$
 \item Phase 1 constraint: max list size: $M$
 \item Phase 2 constraint: max \#lists: $\frac{M}{B}$
 
-Thus max data size: $\frac{M^2}{B}$. 
+Thus max data size: $\frac{M^2}{B}$.
 \end{enumerate}
 
 Block I/O cost:
 \begin{enumerate}
-\item phase 1: $B(R)$ read + $B(R)$ write 
-\item phase 2: $B(R)$ read + $B(R)$ write 
+\item phase 1: $B(R)$ read + $B(R)$ write
+\item phase 2: $B(R)$ read + $B(R)$ write
 \end{enumerate}
-, where B(x) is the number of block. 
+, where B(x) is the number of block.
 
 Thus total IO costs:
 $$
-4B(R) 
+4B(R)
 $$
 \end{enumerate}
 \end{itemize}
@@ -124,17 +124,17 @@ $$
 \item Basic index types
   \begin{enumerate}
   \item Primary index
-  \item Secondary index. 
+  \item Secondary index.
 
-  Notice the order of index: $i+1, i$ level of indexes. Secondary is at the outer level. Secondary is meaningless to have a dense index. 
-  
-  
-  
+  Notice the order of index: $i+1, i$ level of indexes. Secondary is at the outer level. Secondary is meaningless to have a dense index.
+
+
+
   \end{enumerate}
   $\bot$
   \begin{enumerate}
   \item Dense Index
-  \item Spare Index: only works on sorted key. 
+  \item Spare Index: only works on sorted key.
   \end{enumerate}
 \item Multi-level indexes
 \item Operations on conventional index
@@ -147,12 +147,12 @@ $$
   \begin{enumerate}
   \item Non-sequencing \& multi-level
   \item Duplicate values
-  
+
   Solutions:
     \begin{enumerate}
     \item multiple index ptrs
-    \item variable size of index list 
-    \item chaining records 
+    \item variable size of index list
+    \item chaining records
     \item bucket (most used)
     \end{enumerate}
   \end{enumerate}
@@ -172,8 +172,8 @@ $$
 
 \begin{itemize}
 \item Follow the range convention of $[a, b)$.
-\item Left leaning convention 
-\item \textbf{Ptrs} is different \textbf{slots}. 
+\item Left leaning convention
+\item \textbf{Ptrs} is different \textbf{slots}.
 \begin{enumerate}
 \treeitem Non-leaf keys: slots = ptrs $-1 = \lceil\frac{n+1}{2}\rceil -1$
 \treeitem Leaf keys: slots = ptrs $= \lfloor\frac{n+1}{2}\rfloor$
@@ -186,7 +186,7 @@ $$
 \item \textbf{Split invariant}: children balanced or left-leaning
 \item \textbf{Split}: split half, thus invariant.
 \item \textbf{Leaf-Up}: \textit{no delete}, recursively move up the right node's first child; thus invariant.
-\item \textbf{Nonleaf-Up}: \textit{delete} and recursively move up the left's last if left-leaning or right's first if balanced; thus invariant. 
+\item \textbf{Nonleaf-Up}: \textit{delete} and recursively move up the left's last if left-leaning or right's first if balanced; thus invariant.
 \end{enumerate}
 \begin{figure}[hbtp]
 \centering
@@ -195,20 +195,20 @@ $$
 \label{fig:btreeDelete}
 \end{figure}
 \subsection{Advanced insertions}
-Insert a list of sorted keys. 
+Insert a list of sorted keys.
 \begin{itemize}
 \item As \textbf{empty} as possible: reverse the order of insertion simply.
 \item As \textbf{full} as possible:
-reverse engineer the full B-tree. 
+reverse engineer the full B-tree.
 \begin{enumerate}
 \item Full nodes can only be resulted from insertion rather than splitting
-\item Full nodes can be split to $\lceil\frac{n+1}{2}\rceil$ and $\lfloor\frac{n+1}{2}\rfloor$, if left-leaning. 
+\item Full nodes can be split to $\lceil\frac{n+1}{2}\rceil$ and $\lfloor\frac{n+1}{2}\rfloor$, if left-leaning.
 \item Full nodes can be resulted from inserting the tail node with $\lfloor\frac{n+1}{2}\rfloor$.
 \end{enumerate}
 Therefore, the the reverse engineer process is:
 \begin{enumerate}
-\item Reverse insertion on each full leaf nodes, usually the last key. 
-\item Reverse splitting result $\lceil\frac{n+1}{2}\rceil$$\lfloor\frac{n+1}{2}\rfloor$ to the original tail nodes of $\lfloor\frac{n+1}{2}\rfloor$. 
+\item Reverse insertion on each full leaf nodes, usually the last key.
+\item Reverse splitting result $\lceil\frac{n+1}{2}\rceil$$\lfloor\frac{n+1}{2}\rfloor$ to the original tail nodes of $\lfloor\frac{n+1}{2}\rfloor$.
 \end{enumerate}
 \end{itemize}
 
@@ -216,9 +216,9 @@ Therefore, the the reverse engineer process is:
 \textbf{Cire clues}:
 \begin{enumerate}
 \item \textbf{Invariant}: children $\lceil\frac{n+1}{2}\rceil, \lfloor\frac{n+1}{2}\rfloor$
-\item \textbf{Fuse}: fuse remaining to left sibling, if left not full. \textit{Delete} upper level. 
+\item \textbf{Fuse}: fuse remaining to left sibling, if left not full. \textit{Delete} upper level.
 \item \textbf{Redistribute}: Extract the last key of left sibling, if left full. \textit{Adjust} upper level.
-\item \textbf{Non-leaf fuse}: fuse remaining to left sibling, if left not full. \textit{Move down} the upper level. 
+\item \textbf{Non-leaf fuse}: fuse remaining to left sibling, if left not full. \textit{Move down} the upper level.
 \end{enumerate}
 \begin{figure}[hbtp]
 \centering
@@ -235,7 +235,7 @@ Core clues:
   \begin{enumerate}
   \item \textbf{Expand} the index $i=i+1$.
   \item \textbf{Split} the bucket. Reorganized the split bucket according to new $i$.
-  \item \textbf{Untouched} buckets remain untouched. 
+  \item \textbf{Untouched} buckets remain untouched.
   \end{enumerate}
 \item Shorthand notation: 110 \framebox{3} K I
 \end{enumerate}
@@ -244,9 +244,9 @@ Core clues:
         \caption{Extensible Hashing}
     \label{fig:extensibleHashing}
 \end{figure}
-Initial state of extensible hashing: $i=0$, index $\phi$, 1 ptr to a single block. After $i=1$, index entry $0, 1$; 2 ptrs. 
+Initial state of extensible hashing: $i=0$, index $\phi$, 1 ptr to a single block. After $i=1$, index entry $0, 1$; 2 ptrs.
 \subsection{Linear Hashing}
-Extensible hashing is exponentially expanding the index; while linear hashing  linearly. 
+Extensible hashing is exponentially expanding the index; while linear hashing  linearly.
 \begin{figure}[H]
     \centerline{\includegraphics[height = 1in]{img/linearhashing}}
     \caption{Linear Hashing}
@@ -260,20 +260,20 @@ Extensible hashing is exponentially expanding the index; while linear hashing  l
 Definitions:
 \begin{itemize}
 \treeitem $m \triangleq a_1a_2...a_i$, the $i$ \note{lower} bits of $H(K)$ intended for hashing - 110\textbf{001}
-\treeitem $n$ number of buckets (blocks) currently using (max number); doesn't count overflow block. 
+\treeitem $n$ number of buckets (blocks) currently using (max number); doesn't count overflow block.
 \treeitem $r$ number of records
 \treeitem $\tau$ threshold for $\frac{r}{n\cdot cap}$, where $cap$ is the number of slots per bucket (textbook is $\frac{r}{n}$).
 \end{itemize}
-Insert: 
+Insert:
 \begin{itemize}
 \item if $m<n$, insert at $m$-th bucket.
 \item if $n\leq m < 2^i$, insert at $0a_2...a_i$-th bucket, (unset the \textit{highest} bit of usage bit $m$).
-\item if designated bucket full, append to overflow block. 
+\item if designated bucket full, append to overflow block.
 \end{itemize}
 Expand:
 \begin{itemize}
-\item if $\frac{r}{n\cdot cap}>\tau$, inc $n$ $\wedge$ if the resulting bucket idx is like $1.*$, split the corresponding $0.*$ bucket. 
-\item if $2^i<n$, inc $i$. Bucket idx remain unchanged. ($i$ can be passively derived from $n$) 
+\item if $\frac{r}{n\cdot cap}>\tau$, inc $n$ $\wedge$ if the resulting bucket idx is like $1.*$, split the corresponding $0.*$ bucket.
+\item if $2^i<n$, inc $i$. Bucket idx remain unchanged. ($i$ can be passively derived from $n$)
 \end{itemize}
 
 \section{BitMap}
@@ -283,7 +283,7 @@ Expand:
 \caption{Bitmap}
 \label{fig:LABEL}
 \end{figure}
-Non-encoded bitmap vs. encoded bitmap. 
+Non-encoded bitmap vs. encoded bitmap.
 \\
 Core clues:
 \begin{enumerate}
@@ -291,22 +291,22 @@ Core clues:
 \item Encode length information [1]*(i-1)+[0], where i is number of bit for the gap count.
 \item Checksum: len info and gap count are of same size
 \end{enumerate}
-Complexity: 
+Complexity:
 \begin{align*}
 & \sim m \frac{n}{m} 2\log\Big(n/\frac{n}{m} \Big) \\
-& \sim n \cdot 2\log m 
+& \sim n \cdot 2\log m
 \end{align*}
 Derivations:
 \begin{itemize}
 \item $n = T(R)$, $m = V(R, A)$
-\item Assume 1's evenly distributed 
+\item Assume 1's evenly distributed
 \item $\frac{n}{m}$ 1's for each bitmap (i.e. $\frac{\#1's}{unc\ bitmap}$).
-\item For an unc bitmap: n-bit length with $\frac{n}{m}$ 1's; $\ra$ run is $\frac{n}{n/m}=m$, (precisely should consider the space taken by 1's), assuming 1's are evenly distributed. $\frac{n}{n/m}$ is \#0's preceding each 1. 
+\item For an unc bitmap: n-bit length with $\frac{n}{m}$ 1's; $\ra$ run is $\frac{n}{n/m}=m$, (precisely should consider the space taken by 1's), assuming 1's are evenly distributed. $\frac{n}{n/m}$ is \#0's preceding each 1.
 \item For a comp bitmap: $\frac{n}{m}$ 1's with each run $m$, thus encoding length : $\frac{n}{m} 2 \log m$
 \item Thus, in total: $m \cdot \frac{n}{m} \cdot 2 \log{m} = 2n\log m$
 \end{itemize}
 
-To summarize: 
+To summarize:
 $$
 \#bitmaps \cdot \#1's\in bitmap_i \cdot 2\log\Big(\overline{gapLen\in 0's}\Big)
 $$
@@ -318,48 +318,48 @@ $$
 Notations:
 \begin{enumerate}
 \item $\sigma$: Selection, \textit{where} (conditions). Selection does not preserver index.
-\item $\times$: Cartesian product, \textit{from} product. It does not de-dup columns.  
+\item $\times$: Cartesian product, \textit{from} product. It does not de-dup columns.
 \item $\Pi$: Projection, \textit{select} (attributes)
 \item $x\ra y$: Extended projection, rename $x$ to $y$. Scalar func: $a+b\ra y$, String ops: $c||d \ra y$
 
-\textbf{Scalar} functions: their input comes from the same tuple (as opp. \textbf{aggregate}). 
+\textbf{Scalar} functions: their input comes from the same tuple (as opp. \textbf{aggregate}).
 
-Notice that $\Pi_{x\ra y} R$ is to project R to x first and to apply the transformation; thus only column $y$ remains. 
+Notice that $\Pi_{x\ra y} R$ is to project R to x first and to apply the transformation; thus only column $y$ remains.
 $$
 \Pi_{x, y\ra z, x+y\ra w} R
 $$
 Alternatively, $PLUS_{x, y\ra z}$; similarly $CONCAT, MULT, CONCAT}$. Alternative notations for extended projection
-\item $\bowtie$: Natural join: $R\bowtie S = \Pi_{distinctAttrs}\sigma_{condOnBoth}(R\times S)$. Notice that the $\times$ is \textbf{bag} version; and $\bowtie$ de-dups \textit{columns}. The results $LHS\equiv RHS$, but the query plans of $LHS, RHS$ may be different. 
+\item $\bowtie$: Natural join: $R\bowtie S = \Pi_{distinctAttrs}\sigma_{condOnBoth}(R\times S)$. Notice that the $\times$ is \textbf{bag} version; and $\bowtie$ de-dups \textit{columns}. The results $LHS\equiv RHS$, but the query plans of $LHS, RHS$ may be different.
 
 \item $\bowtie_{\theta}$: $= \sigma_{\theta} (R\times S)$. $\theta$ is a condition. Notice that, strictly, $\bowtie_\theta$ is \textit{not} the $\theta$ version of natural join, but the $\theta$ version of Cartesian product. It does \textit{not} de-dup \textit{columns}.
-However, we usually treat $\bowtie_\theta$ as $\bowtie$, the natural join. 
+However, we usually treat $\bowtie_\theta$ as $\bowtie$, the natural join.
 \item $\gamma$: Group and aggregation
 
-\textbf{Aggregate} functions. 
+\textbf{Aggregate} functions.
 $$
 \gamma_{attr_{grpby}, aggrFn(attr) \ra attr'}
 $$
-Alternatively, $SUM_{attr_{grpby},aggrFn(attr)\ra attr'}$, similarly $AVG, MIN, MAX, COUNT$. Alternative notations for group and aggregation. 
-\item $\tau$: Order by. 
+Alternatively, $SUM_{attr_{grpby},aggrFn(attr)\ra attr'}$, similarly $AVG, MIN, MAX, COUNT$. Alternative notations for group and aggregation.
+\item $\tau$: Order by.
 
 A result $o(exp)$ is ordered if
 \begin{enumerate}
 \item $o$ \textbf{retains} the originally ordered $exp$. (e.g. $\sigma$)
 \item $o$ \textbf{creates} ordering. (e.g. ordered by pk, then iterative joining implt with FLY)
 \end{enumerate}
-$\sigma$ may retain the order generated by $\tau$ but depends on implementation. e.g. $\sigma^\text{FLY}$ may prodeces a ordered result. Discussion: 
+$\sigma$ may retain the order generated by $\tau$ but depends on implementation. e.g. $\sigma^\text{FLY}$ may prodeces a ordered result. Discussion:
 
 $$
 \tau_{R.A, R.B}\ \sigma_{R.B>5}^\text{FLY} R
 $$
 \begin{flushright}, produces a list\end{flushright}
 $$
-\sigma^\text{FLY}_{R.B>5}\ \tau_{R.A, R.B} R 
+\sigma^\text{FLY}_{R.B>5}\ \tau_{R.A, R.B} R
 $$
-\begin{flushright}, produces a bag but preserves the order.\end{flushright} 
+\begin{flushright}, produces a bag but preserves the order.\end{flushright}
 \end{enumerate}
 \subsection{Query Plan}
-A simple SFW (Select From Where). 
+A simple SFW (Select From Where).
 \begin{enumerate}
 \item Naive plan p:
 $$
@@ -368,7 +368,7 @@ $$
 
 FLY and SCAN are how exactly the plan is run.
 \begin{enumerate}
-\item \textbf{FLY}: on the fly, one entry at a time. Implementation: Iterator. No intermediate storage 
+\item \textbf{FLY}: on the fly, one entry at a time. Implementation: Iterator. No intermediate storage
 \item \textbf{SCAN}: scan the tables, one block at a time.
 \begin{enumerate}
 \item \textbf{Table-scan}. operator simply reads each block holding tuples of the relation.
@@ -387,13 +387,13 @@ $$
 $$
 \Pi_{attrs}\ \sigma_{cond_S}(\sigma_{cond_R}^\text{INDEX}R \bowtie^\text{RI} S)
 $$
-$\bowtie^\text{RI}$ Right Index Join. 
+$\bowtie^\text{RI}$ Right Index Join.
 Steps:
 \begin{itemize}
-\item $\sigma^{\text{INDEX}}$ uses index to get tuples based on condition on $R$. 
+\item $\sigma^{\text{INDEX}}$ uses index to get tuples based on condition on $R$.
 \item $\bowtie^\text{RI}$. For each tuple in the result $R$:
 \begin{itemize}
-\item Match $S$'s tuple using $S$'s index, in $O(1)$. 
+\item Match $S$'s tuple using $S$'s index, in $O(1)$.
 \end{itemize}
 \item $\sigma$ filters $S$ based on condition on $S$.
 \item $\Pi_{attrs}$ ...
@@ -401,12 +401,12 @@ Steps:
 \end{enumerate}
 \section{From query to optimal plan}
 \begin{enumerate}
-\item \textbf{lqp}. logical query plan $\equiv$ algebra ops 
+\item \textbf{lqp}. logical query plan $\equiv$ algebra ops
 \item Algebraic rewritings to transform the lqp
 \item Physical Plan
 \item Example:
 \begin{itemize}
-\item \textbf{``IN'' Elimination}: 
+\item \textbf{``IN'' Elimination}:
 \begin{pseudo}
 select A.a
 from A where A.v in (
@@ -433,7 +433,7 @@ $$
 \end{itemize}
 \end{enumerate}
 \section{Bag algebra, list algebra, and extensions}
-In this nodes, bag-version operations are assumed. 
+In this nodes, bag-version operations are assumed.
 \begin{enumerate}
 \item $\cup, \cap$: Algebraic Operators (Bag Version)
 $$
@@ -454,7 +454,7 @@ R \cdot S &= S\cdot R \\
 R\cdot (S\cdot T) &= (R\cdot S) \cdot T \\
 \end{align}
 
-, where $\cdot \in \{\times, \bowtie, \cup, \cap \}$  
+, where $\cdot \in \{\times, \bowtie, \cup, \cap \}$
 
 proof: $R\times S = S\times R$
 \begin{align*}
@@ -463,7 +463,7 @@ proof: $R\times S = S\times R$
 & \forall t, t\in R\times S,\mbox{ n times} \\
 & r \in R\mbox{ m times}, s\in S \mbox{ k times}\\
 & n = m*k \\
-& \Ra\mbox{ find corresponding }t \in sr, k*m,\mbox{ n times} \\ 
+& \Ra\mbox{ find corresponding }t \in sr, k*m,\mbox{ n times} \\
 & \therefore R \times S \subset S \times R \\
 & \mbox{vice versa...}
 \end{align*}
@@ -473,7 +473,7 @@ proof: $R\times S = S\times R$
 \sigma_{c_1\vee c_2}R &= \sigma_{c_1}R\ \cup\ \sigma_{c_2}R
 \end{align*}
 \begin{flushright}, notice that $\vee$ only applies for \note{set} version\end{flushright}
-To apply $\vee$ to \note{bag} version: 
+To apply $\vee$ to \note{bag} version:
 \begin{align*}
 \sigma_{c_1\vee c_2}R = \sigma_{c_1} R\ \cup\ \sigma_{c_2} (R-\sigma_{c_1}R)
 \end{align*}
@@ -495,17 +495,17 @@ Decomposition of Negation:
 \begin{itemize}
 \item General
 $$
-\sigma_{c}(R\cdot S) = (\sigma_{c} R)\cdot (\sigma_{c} S) 
+\sigma_{c}(R\cdot S) = (\sigma_{c} R)\cdot (\sigma_{c} S)
 $$
 \begin{flushright}, where $\cdot\in \{-, \cup, \times, \bowtie\}$. \end{flushright}
 
-\item For $\{-\}$, it can directly drop the selection: $\sigma_{c}S$ to $S$. 
+\item For $\{-\}$, it can directly drop the selection: $\sigma_{c}S$ to $S$.
 $$
 \sigma_{c}(R-S) = (\sigma_{c} R)-S
 $$
 \item For $\{\times, \bowtie\}$, it can further drops the $\sigma_{c}T$ to $T$ if the condition does \textit{not} refer to attributes in $T$.
 \begin{align*}
-\sigma_{c}(R\cdot S) = R\cdot (\sigma_{c} S) 
+\sigma_{c}(R\cdot S) = R\cdot (\sigma_{c} S)
 \end{align*}
 \end{itemize}
 
@@ -513,12 +513,12 @@ Proof: $\sigma_{A=2}(R\bowtie S) = (\sigma_{A=2}R)\bowtie S$, given commutativit
 \begin{align*}
 \sigma_{A=2}(R\bowtie S) = \sigma_{A=2}(S\bowtie R) = S \bowtie (\sigma_{A=2}R)=(\sigma_{A=2}R\bowtie S)
 \end{align*}
-This is a technique of proof by using axioms. 
+This is a technique of proof by using axioms.
 
 \rih{Combine $\pi$ \& $\sigma$}
 
-\item \rih{Push down $\pi$ - Supperset $\pi$} 
- 
+\item \rih{Push down $\pi$ - Supperset $\pi$}
+
 \begin{align*}
 & \pi_x (R \cup S) = \pi_x R \cup \pi_x S \\
 & \pi_x (R\cap S) \neq \pi_x R \cap \pi_x S\\
@@ -529,11 +529,11 @@ This is a technique of proof by using axioms.
 \end{align*}
 \begin{itemize}
 \item Supperset for conditions in $\pi$.
-\item $\pi$ can reduce the length of a tuple; thus it is useful to push down $\pi$ to fit more tuples in memory. When denoting $\supset, \supseteq, \subset, \subseteq$, it is for AND composite. $cond1\supseteq a$ is a shorthand notation for $\{c_1|c_1 \supseteq a\}$, a notation for superset. 
-\item \rih{Difference}. Notice that, $\pi_a (R-S) \neq \pi_a R - \pi_a S$ 
+\item $\pi$ can reduce the length of a tuple; thus it is useful to push down $\pi$ to fit more tuples in memory. When denoting $\supset, \supseteq, \subset, \subseteq$, it is for AND composite. $cond1\supseteq a$ is a shorthand notation for $\{c_1|c_1 \supseteq a\}$, a notation for superset.
+\item \rih{Difference}. Notice that, $\pi_a (R-S) \neq \pi_a R - \pi_a S$
 \item \rih{Push down priority of $\pi, \sigma$}. Normally $\sigma$ is given higher priority than $\pi$ if $\sigma$ can do index selection to avoid $\pi$ on all tuples (Section - \ref{sec:queryExec})
 \end{itemize}
-\item \rih{Aggregation} 
+\item \rih{Aggregation}
 
 \begin{align*}
 & \text{Push down } \sigma\\
@@ -544,14 +544,14 @@ This is a technique of proof by using axioms.
 & \Sigma_{GL2; RA1 \ra RA2} \Sigma_{GL1; GA \ra RA1} R = \Sigma_{GL2; GA\ra RA2} R
 \end{align*}
 Notation, in slides it is $grpList$ or $GL$ as $grpAttrs$; $SUM$ as $\Sigma$; $PLUS$ as +.
-\item \rih{Cost, rule of thumb} 
+\item \rih{Cost, rule of thumb}
 
 \end{enumerate}
 \subsection{Proof/Disproof the equivalence of rewriting}
-The \note{breakthrough} points: 
+The \note{breakthrough} points:
 \begin{enumerate}
 \item $\phi$ table
-\item NULL column. 
+\item NULL column.
 \item Bag version duplicates
 \end{enumerate}
 
@@ -561,14 +561,14 @@ The \note{breakthrough} points:
 \subsection{Query Execution}\label{sec:queryExec}
 \subsubsection{Implementation of $\sigma$}
 \begin{enumerate}
-\item $\sigma^\text{INDEX}_{A=c}$ 
+\item $\sigma^\text{INDEX}_{A=c}$
 \begin{eqnarray*}
 time = \left\{ \begin{array}{rl}
   \frac{B(R)}{V(R, A)} &\text{// if tuple clustered on $A$, default }\\
   \frac{T(R)}{V(R, A)} &\text{// if tuple not clustered on $A$}
        \end{array} \right.
 \end{eqnarray*}
-Normally pipelined version of $\sigma^\text{INDEX}_{A=c}$ is impossible 
+Normally pipelined version of $\sigma^\text{INDEX}_{A=c}$ is impossible
 \item $\sigma^\text{SCAN}_{A=c}$
 \begin{eqnarray*}
 time = \left\{ \begin{array}{rl}
@@ -582,16 +582,16 @@ time = \left\{ \begin{array}{rl}
 Notice:
 \begin{itemize}
 \item \textbf{Output pipeline.} Write out of the join result at the end/final/return is not considered due to output pipeline, always.
-\item \textbf{Input pipeline.} 1 $B(R)$ may be saved due to input pipeline. 
-\item \textbf{Cost model}. Time of execution is measured by number of disk IOs. 
+\item \textbf{Input pipeline.} 1 $B(R)$ may be saved due to input pipeline.
+\item \textbf{Cost model}. Time of execution is measured by number of disk IOs.
 \end{itemize}
 
-$M$ for blocks rather than bytes size. 
+$M$ for blocks rather than bytes size.
 
 \begin{enumerate}
 \item $\bowtie^{\text{1P}}$ Iteration join (one pass)
 
-\textbf{Requirement}. As long as any of the two can fit into the memory. 
+\textbf{Requirement}. As long as any of the two can fit into the memory.
 $$
 \min(B(R), B(S)) < M
 $$
@@ -610,7 +610,7 @@ time = \left\{ \begin{array}{rl}
 \item Sort-merge phase. \textbf{Mem} req: $|R|/M<M; |S|/M<M $
 \item Merge-join phase. \textbf{Mem} req: $|R|/M+|S|/M <M$
 
-Thus, all sqrt can fit into memory. 
+Thus, all sqrt can fit into memory.
 $$
 M>\sqrt{\max{(|R|,|S|)}}
 $$
@@ -618,9 +618,9 @@ $$
 
 , where $|X|\triangleq B(X)$
 
-Possible to combine the merge 
+Possible to combine the merge
 
-\textbf{Time.} \textbf{Sort}: 1 read 1 write. \textbf{Merge}: 1 read; thus 
+\textbf{Time.} \textbf{Sort}: 1 read 1 write. \textbf{Merge}: 1 read; thus
 \begin{eqnarray*}
 time = \left\{ \begin{array}{rl}
   3B(R)+3B(S) &\text{// if normal} \\
@@ -629,14 +629,14 @@ time = \left\{ \begin{array}{rl}
   0+3B(S) &\text{// if input pipeline on $R$ and $R$ sorted}
        \end{array} \right.
 \end{eqnarray*}
-Multiple times of $\bowtie^\text{SM}$, but may not sorted on the same attr. 
-\item $\bowtie^\text{RI}, \bowtie^\text{INDEX}$ Index join 
+Multiple times of $\bowtie^\text{SM}$, but may not sorted on the same attr.
+\item $\bowtie^\text{RI}, \bowtie^\text{INDEX}$ Index join
 
-\textbf{Difference.} btw RI and INDEX: $\bowtie^\text{RI}$ uses only 1 index; while $\bowtie^\text{INDEX}$ uses 2 indexes, thus it can process on indexes first (ptr), delaying the block access to data. 
+\textbf{Difference.} btw RI and INDEX: $\bowtie^\text{RI}$ uses only 1 index; while $\bowtie^\text{INDEX}$ uses 2 indexes, thus it can process on indexes first (ptr), delaying the block access to data.
 
-\textbf{Time \& Mem.} when \textit{no} relation fits in mem, $\bowtie^{RI}$ outperforms $\forall$ any other technique, even for 1Pass.  
+\textbf{Time \& Mem.} when \textit{no} relation fits in mem, $\bowtie^{RI}$ outperforms $\forall$ any other technique, even for 1Pass.
 
-\textbf{Cost}. It reads $B(R)$; for each $T(R)$, loads $\lceil B(S)/V(S, B)\rceil$ blocks according to the index; thus 
+\textbf{Cost}. It reads $B(R)$; for each $T(R)$, loads $\lceil B(S)/V(S, B)\rceil$ blocks according to the index; thus
 \begin{eqnarray*}
 time_\text{clustedIndex} = \left\{ \begin{array}{rl}
   B(R)+T(R)\cdot \frac{B(S)}{V(S, B)} &\text{// if normal} \\
@@ -654,11 +654,11 @@ $$
 T(R) \ra V(R)
 $$
 \begin{itemize}
-\item $1+...$, the 1 for \textit{index block access} to the non-cached leaf nodes of the B-tree index 
+\item $1+...$, the 1 for \textit{index block access} to the non-cached leaf nodes of the B-tree index
 \item Create index (normally already created): read blocks and write index $B(S)+B(index)$
-\item $\sigma^{\text{RI}}$ will pay off when $B(S)$ and $V(S,B)$ are gigantic. 
+\item $\sigma^{\text{RI}}$ will pay off when $B(S)$ and $V(S,B)$ are gigantic.
 \end{itemize}
-\item $\bowtie^\text{HASH}$ Hash join 
+\item $\bowtie^\text{HASH}$ Hash join
 
 \textbf{Requirement.} $\min\big(B(R_{i}), B(S_{i}})\big) <M$. The smaller \textit{bucket} need to fit in mem when join the bucket. There are $M-1$ buckets $R_i, S_i$, thus
 \begin{align*}
@@ -671,60 +671,60 @@ M &> \sqrt{\min(|R|, |S|)}
 \item Hash every tuple into $M-1$ buckets $R_i, S_i$ (the remaining 1 for the temp working memory).
 \item Load either bucket $R_i, S_i$ into mem, scan the other and join.
 \end{enumerate}
-\textbf{Cost.} To create hashed buckets, 1 read write R, S. To hash join, 1 read; thus 
+\textbf{Cost.} To create hashed buckets, 1 read write R, S. To hash join, 1 read; thus
 \begin{eqnarray*}
 time = \left\{ \begin{array}{rl}
   3B(R)+3B(S) &\text{// if normal} \\
   2B(R)+3B(S) &\text{// if input pipeline on $R$}\\
        \end{array} \right.
 \end{eqnarray*}
-Hash join is similar to sort-merge join. 
+Hash join is similar to sort-merge join.
 \end{enumerate}
 
 \subsubsection{Analysis}
 \begin{enumerate}
-\item \textbf{Output pipeline.} Results are \textit{pipelined} to output, thus not consider write the final result into disk. 
+\item \textbf{Output pipeline.} Results are \textit{pipelined} to output, thus not consider write the final result into disk.
 \item \textbf{Sort.} Sorted table does not need to sort in sort-merge on the sorted attr.
 \begin{enumerate}
 \item 1-pass on sorted table, result may also be sorted (depends).
 \item sort-merge will produce sorted result
 \end{enumerate}
-\item \textbf{Intermediate non-index.} Intermediate results do not have index; unless otherwise stated.  
-\item \textbf{Cost algorithm.} calculate time $\leftarrow$ calculate the \# disk IO $\leftarrow$ \# blocks $B(R)$ $\leftarrow$ intermediate tuple size $T(R)$. 
+\item \textbf{Intermediate non-index.} Intermediate results do not have index; unless otherwise stated.
+\item \textbf{Cost algorithm.} calculate time $\leftarrow$ calculate the \# disk IO $\leftarrow$ \# blocks $B(R)$ $\leftarrow$ intermediate tuple size $T(R)$.
 \end{enumerate}
 \subsection{Cost analysis (intermediate size)}
 \rih{Intro}
 \begin{itemize}
 \item Two aspects of cost analysis:
 \begin{enumerate}
-\item Size of the intermediate result 
+\item Size of the intermediate result
 \item Number of IOs.
 \end{enumerate}
 \item Notations
 \begin{enumerate}
 \treeitem T(R) : #tuples in R
 \treeitem S(R) : #bytes (size) in each R tuple
-\treeitem B(R): #blocks to hold all R tuples 
+\treeitem B(R): #blocks to hold all R tuples
 \treeitem V(R, A) : #distinct values in R for attribute A
 \end{enumerate}
-\item Corner case 
+\item Corner case
 $$
 V(R_1\times R_2) \approx V(R_1, A)
 $$
-Corner case: $R_2=\phi$, then RHS should be 0. But, in size estimation, doesn't consider the corner case. Normally, only the average case (uniform distr.) is considered. 
+Corner case: $R_2=\phi$, then RHS should be 0. But, in size estimation, doesn't consider the corner case. Normally, only the average case (uniform distr.) is considered.
 \end{itemize}
 \rih{Size estimation for $\bowtie$}
 \begin{itemize}
 \item Assumption: either $\pi_{A}R_1 \subseteq \pi_{A}R_2$ or $\pi_{A}R_1 \supseteq \pi_{A}R_2$.
-Notice the assumption may be violatd. 
+Notice the assumption may be violatd.
 \item \textbraceleft PK, FK\textbraceright\ relationship $R_1\bowtie R_2$
 
-One way PK, FK for $R_1, R_2$: 
+One way PK, FK for $R_1, R_2$:
 $$
 T(W) = \frac{T(R_1)}{V(R_1, A)} T(R_2)
 $$
 
-Generalized to symmetry (this is an est.): 
+Generalized to symmetry (this is an est.):
 $$
 T(W) = \frac{T(R_1)T(R_2)}{\max\{V(R_1, A), V(R_2, A)\}}
 $$
@@ -732,14 +732,14 @@ $$
 \rih{Subexpressions \& Value preservation}
 
 \textbf{Probability approach}. The combination should not change the a $V$'s prob distr. since assumped indpt; thus,\begin{itemize}
-\item Value preservation for the pushing down of $\sigma$. 
-\item Value preservation for the composite $\bowtie$. 
+\item Value preservation for the pushing down of $\sigma$.
+\item Value preservation for the composite $\bowtie$.
 \end{itemize}
 \subsection{Plan Enumeration}
 \subsubsection{Hypergraph}
-INGRES \textit{greedy} heuristic search. 
+INGRES \textit{greedy} heuristic search.
 
-Small relation $\triangleq \sigma R$  
+Small relation $\triangleq \sigma R$
 
 Two assumptions:
 \begin{enumerate}
@@ -750,22 +750,22 @@ Left-deep algebraic expression.
 \subsection{Analyze query processing}
 Process:
 \begin{enumerate}
-\item Relationship hypergraph for visualization. 
-\item Preprocess memory inforamtion 
-\item Def shorthand notations for conditions. 
-\item Draw the parse tree. 
-\item Calculate $B(.), T(.)$, tuple per block alternately. Notice $S(.)$ affects tuple per block. 
+\item Relationship hypergraph for visualization.
+\item Preprocess memory inforamtion
+\item Def shorthand notations for conditions.
+\item Draw the parse tree.
+\item Calculate $B(.), T(.)$, tuple per block alternately. Notice $S(.)$ affects tuple per block.
 
 Given $R$ is $a$ tuples per block, $S$ is $b$ tuple per block. Then $R\bowtie S$ is $$
-\frac{1}{\frac{1}{a}+\frac{1}{b}} 
+\frac{1}{\frac{1}{a}+\frac{1}{b}}
 $$
-per block. 
+per block.
 \end{enumerate}
 \chapter{Failure Recovery (FR)}
 \section*{Introduction}
-Consistency. T executes 1) until completion \& 2) in isolation. 
+Consistency. T executes 1) until completion \& 2) in isolation.
 
-Violation of consistency: 
+Violation of consistency:
 \begin{enumerate}
 \item Until completion: failures - Failure Recovery (FR)
 \item In isolation: concurrent control with data sharing - Concurrency Control
@@ -774,19 +774,19 @@ Violation of consistency:
 \end{enumerate}
 
 \section{Notations}
-Block based 
+Block based
 \begin{enumerate}
-\treeitem Input(x) $\triangleq$ part mem := x with block 
+\treeitem Input(x) $\triangleq$ part mem := x with block
 \treeitem Output(x) $\triangleq$ block := x with block
-\treeitem Read(x,t) $\triangleq$ t := x in block 
+\treeitem Read(x,t) $\triangleq$ t := x in block
 \treeitem Write(x,t) $\triangleq$ x in block := t // write need Input(x) since block based access.
 \end{enumerate}
 
 \section{FR Solutions}
 \subsection{Undo logging}
-Immediate write db data to disk 
+Immediate write db data to disk
 \subsubsection{Clues}
-To undo, records: 
+To undo, records:
 \begin{enumerate}
 \item \textbf{start}: $<T_i, \text{start}>$
 \item \textbf{prior values}: $<T_i, A, \text{prior}>$
@@ -808,7 +808,7 @@ Process:
 $S = T_i$ with start $\wedge$ ($\neg$ commit $\vee$ $\neg$ abort)
 foreach record $T_i, X, x$ reversed=true
   if $T_i \in S$
-    write(X, x) 
+    write(X, x)
     output(X)
 foreach $T_i$
   log $T_i, abort$
@@ -818,9 +818,9 @@ Failure during recovery is not an issue, since undo logging is idempotent.
 
 
 \subsection{Redo logging}
-Deferred write db data to disk. 
+Deferred write db data to disk.
 \subsubsection{Clues}
-To redo, records: 
+To redo, records:
 \begin{enumerate}
 \item \textbf{start}: $<T_i, \text{start}>$
 \item \textbf{posterior values}: $<T_i, A, \text{posterior}>$
@@ -831,13 +831,13 @@ To redo, records:
 \begin{enumerate}
 \item \unibox{\textbf{Log record on disk \note{BEFORE} correspondence}}: before x is modified on disk, log records pertaining to x must be on disk
 \item \unibox{\textbf{Commit log on disk \note{BEFORE} any}}: before any (not all) writes of $T$ is reflected on disk, commit must flush to log.
-\item \unibox{\textbf{Flush}}: flush log records at $T$ commit. 
+\item \unibox{\textbf{Flush}}: flush log records at $T$ commit.
 \end{enumerate}
 
 \subsubsection{Recovery rules}
 Forward pass
 
-Process: 
+Process:
 \begin{pseudo}
 # no abort log
 $S = T_i$ with start $\wedge$ commit
@@ -848,7 +848,7 @@ foreach record $T_i, X, x$ reversed=false
 \end{pseudo}
 
 \subsubsection{Checkpoint}
-Redo recovery is very slow. 
+Redo recovery is very slow.
 
 \subsection*{Comparison: undo vs. redo }
 \begin{enumerate}
@@ -876,7 +876,7 @@ $<T_i, A, \text{posterior}, \text{prior}>$
 \begin{enumerate}
 \item \unibox{\textbf{Log record on disk \note{BEFORE} correspondence}}: before X is modified on disk, log records pertaining to X must be on disk
 \item \unibox{\textbf{Commit before any/after all}}: no requirement of $X$ modified on disk w.r.t. $T_i$ commit. (i.e. X can be modified on disk before or after commit log).
-\item \unibox{\textbf{Flush}}: flush log records at $T$ commit. 
+\item \unibox{\textbf{Flush}}: flush log records at $T$ commit.
 \end{enumerate}
 
 \subsubsection{Recovery rules}
@@ -903,8 +903,8 @@ $S = T_i$ with start $\wedge$ commit
 \chapter{Concurrency Control (CC)}
 \section{Concepts}
 \begin{enumerate}
-\item \textbf{Conflict actions}: RW, WR, WW. e.g. RW is $R_i(A); W_j(A)$. Different transactions' action on the same attr. 
-\item \textbf{Schedule}: chronological order of actions 
+\item \textbf{Conflict actions}: RW, WR, WW. e.g. RW is $R_i(A); W_j(A)$. Different transactions' action on the same attr.
+\item \textbf{Schedule}: chronological order of actions
 \item \textbf{Serial schedule}: no interleaving actions of transactions in schedule
 \item \textbf{Conflict equivalent $\equiv^c$}: $S_1 \equiv^c S_2$ if $S_1$ can be transformed into $S_2$ by swaps non-conflicting actions inter-transactions.
 \item \textbf{Conflict serializable}: a schedule $S$ is conflict serializable if $\exists SerS, SerS\text{ is a serial schedule } \wedge S\equiv^c SerS$.
@@ -919,13 +919,13 @@ Implicitly assume $i\neq j$.
 
 \textbf{Precedes}: $T_i <_S T_j$ in $S$; it is possible $T_j <_{S'} T_j$ in $S'$.
 
-\textbf{Conflict precedes}: $T_i$ precedes $T_j$ in $S$ ($T_i <_S T_j$) with conflict actions. 
+\textbf{Conflict precedes}: $T_i$ precedes $T_j$ in $S$ ($T_i <_S T_j$) with conflict actions.
 
-Graph definitions: 
+Graph definitions:
 \begin{enumerate}
-\item $G = P(S)$. A directed graph 
+\item $G = P(S)$. A directed graph
 \item $V \triangleq \{T\mid T\in S\}$
-\item $E \triangleq \{T_i \ra T_j\mid p_i(A) <_s q_j(A) \wedge p_i(A)  \text{ conflicts } q_j(A)\}$. 
+\item $E \triangleq \{T_i \ra T_j\mid p_i(A) <_s q_j(A) \wedge p_i(A)  \text{ conflicts } q_j(A)\}$.
 \end{enumerate}
 \begin{figure}[hbtp]
 \centering
@@ -942,7 +942,7 @@ foreach object $A$
 \end{pseudo}
 \subsection{Theorem}
 \begin{enumerate}
-\item\ Lemma: 
+\item\ Lemma:
 $$S_1 \equiv^c S_2 \Ra P(S_1)=P(S_2)$$
 \item Theorem:
 $$P(S) \text{ is acyclic} \Leftrightarrow S \text{ is conflict serializable } \exists serS$$
@@ -959,7 +959,7 @@ $$P(S) \text{ is acyclic} \Leftrightarrow S \text{ is conflict serializable } \e
 \begin{enumerate}
 \item \textbf{Well-formed}: $\forall$ R/W action. $T_i$ has to lock $l_i(A)$ before the action, and has to unlock $u_i(A)$ after the action.
 \item \textbf{Legal}: No $T_j$ can $l_j(A)$ during the time range of $l_i(A) ... u_i(A)$ of $T_i$.
-\item \textbf{2PL}: Two-phase lock, For each $T_i$, no $u_i(.)$ before $l_i(.)$ and no $l_i(.)$ after $u_i(.)$. 
+\item \textbf{2PL}: Two-phase lock, For each $T_i$, no $u_i(.)$ before $l_i(.)$ and no $l_i(.)$ after $u_i(.)$.
 \end{enumerate}
 
 2PL may lead to deadlock, thus need to detect deadlock and abort the later transaction.
@@ -967,30 +967,30 @@ $$P(S) \text{ is acyclic} \Leftrightarrow S \text{ is conflict serializable } \e
 Strict 2PL: $\forall R_i, W_i, u_i \cdot R_i(.)/W_i(.) <_S u_i(.) $
 
 \subsubsection{Proof}
-Prove that: under the 3 rules of the locking protocol $\Ra$ schedules $S$ conflict serializable. 
+Prove that: under the 3 rules of the locking protocol $\Ra$ schedules $S$ conflict serializable.
 
-Lemma: In $S$, 
+Lemma: In $S$,
 $$
 T_i \ra T_j \Ra SH(T_i) <_s SH(T_j)
 $$
 
 , where $SH(T_i)\triangleq Shrink(T_i)$, first unlock action of $T_i$.
 
-Then prove by contradiction using the lemma. 
+Then prove by contradiction using the lemma.
 \subsection{Lock Performance}
 \subsubsection{Lock modes}
 Lock modes $l\hp \mat{M}$:
 \begin{enumerate}
-\treeitem \textbf{Shared S}: SS $\neg$ conflict 
+\treeitem \textbf{Shared S}: SS $\neg$ conflict
 \treeitem \textbf{Exclusive X}
-\treeitem \textbf{Incremental I}: II $\neg$ conflict 
+\treeitem \textbf{Incremental I}: II $\neg$ conflict
 \treeitem \textbf{Update U}: knows $l\hp S$ will upgrade to $l\hp X$. Avoid upgrade causing deadlock.
 \end{enumerate}
 Operations:
 \begin{enumerate}
 \item Upgrade: $l\hp S \ra l\hp X$. Notice upgrade is different from update.
 \end{enumerate}
-Compatibility matrix: 
+Compatibility matrix:
 
 compatibility of different modes in \textbf{legal} scheduler.
 \begin{figure}[H]
@@ -998,7 +998,7 @@ compatibility of different modes in \textbf{legal} scheduler.
 \begin{tabular}{cc}
   \includegraphics[height = 0.8in]{img/SXI} &
   \includegraphics[height = 0.77in]{img/SXU} &
-  a & b 
+  a & b
 \end{tabular}
 \caption{(a) SXI compatibility. (b) SXU compatibility.}
 \label{fig:images}
@@ -1014,11 +1014,11 @@ Hash table + LinedList for info.
 
 
 \subsubsection{Multi-granularity}
-The object (lock target) is multi-granular: Relation, disk block, tuple. 
+The object (lock target) is multi-granular: Relation, disk block, tuple.
 
 I for \textbf{intent}.
 
-Compatibility matrix:  
+Compatibility matrix:
 \begin{figure}[H]
     \centerline{\includegraphics[height = 1.7in]{img/lockModes}}
     \caption{Compatibility Matrix}
@@ -1042,10 +1042,10 @@ X & none\\
 \subsubsection{Delete and Insert}
 \begin{itemize}
 \item Delete: lock on tuple
-\item Insert: 
+\item Insert:
 \begin{enumerate}
 \item Lock on tuple. Issue of phantom objects
-\item Lock on table. Issue of concurrency 
+\item Lock on table. Issue of concurrency
 \item Lock on partial table by B+Tree index
 \end{enumerate}
 \end{itemize}
@@ -1055,12 +1055,12 @@ X & none\\
 \subsection{Clues}
 Once the child has been locked, the $\pi$ can be unlocked
 \subsection{Rules}
-Tree protocol rules for $X$ 
+Tree protocol rules for $X$
 \begin{enumerate}
-\item 1st lock by $T_i$ can be on any item 
+\item 1st lock by $T_i$ can be on any item
 \item Subsequently, item Q can be locked by $T_i$ only if $\pi(Q)$ is locked by $T_i$.
 \item Item can be unlocked at any time
-\item After item Q is unlocked by $T_i$, it cannot be relocked by $T_i$. (2PL in the object level). 
+\item After item Q is unlocked by $T_i$, it cannot be relocked by $T_i$. (2PL in the object level).
 \end{enumerate}
 \section{Validation CC}
 \subsection{Concepts}
@@ -1070,7 +1070,7 @@ Tree protocol rules for $X$
 \item \textbf{Validate} (atomic)
 \item \textbf{Write} (write to disk)
 \end{enumerate}
-System maintains 
+System maintains
 \begin{itemize}
 \item FIN: set of T's finish phase 3
 \item VAL: set of T's finishes phase 2
@@ -1078,33 +1078,33 @@ System maintains
 Key ideas:
 Schedule S validation order $T_1T_2...T_n \ra S\equiv^c T_1T_2...T_n$
 \subsection{Rules}
-Intuitions: 
+Intuitions:
 \begin{enumerate}
-\item Avoid WR conflicts: conflicts arises when $T_h$ hasn't written before $T_i$ starts; thus $T_h$ should finish before $T_i$ starts 
-\item Avoid WW conflicts: conflicts arises $T_h$ hasn't written before $T_i$ writes; thus $T_h$ should finish before $T_i$ validated. 
+\item Avoid WR conflicts: conflicts arises when $T_h$ hasn't written before $T_i$ starts; thus $T_h$ should finish before $T_i$ starts
+\item Avoid WW conflicts: conflicts arises $T_h$ hasn't written before $T_i$ writes; thus $T_h$ should finish before $T_i$ validated.
 \end{enumerate}
 Rules:
 \begin{pseudo}
 when $T_i$ starts
   IGNORE[$T_i$] = FIN
-when $T_i$ validates 
+when $T_i$ validates
   if check($T_i$)
     VAL.add($T_i$)
-    commence $T_i$ writes 
+    commence $T_i$ writes
     FIN.add($T_i$)
-        
+
 def check($T_i$)
   for $T_h$ in VAL - IGNORE[$T_i$]
     if $WS[T_h]\cap RS[T_i] \neq \phi$ || $WS[T_h]\cap WS[T_i] \neq \phi$ && $T_h \notin FIN$
       return false
   return true
-  
+
 \end{pseudo}
 \chapter{FR \& CC}
 \section{Concepts}
-Serializable $\bot$ Recoverable 
+Serializable $\bot$ Recoverable
 
-Notice here $\ra$ is ``if'' rather than directed edge in graph. 
+Notice here $\ra$ is ``if'' rather than directed edge in graph.
 
 Definitions
 \begin{enumerate}
@@ -1115,7 +1115,7 @@ $T_h \Ra_S T_i \equiv T_i$ reads from $T_h$
 Intuitively, $T_h \Ra_S T_i$
 \begin{enumerate}
 \treeitem WR $T_h, T_i$;
-\treeitem $T_h$ hasn't aborted; 
+\treeitem $T_h$ hasn't aborted;
 \treeitem If $\exists$ 3rd $T_k$, $T_k$ aborted
 \end{enumerate}
 \begin{align*}
@@ -1132,11 +1132,11 @@ T_h \Ra_S T_i &\triangleq \\
 \section{RC, ACR, ST}
 Definitions:
 \begin{enumerate}
-\item \textbf{RC}: $S$ recoverable $\triangleq \forall T_i$ \unibox{\textbf{commits}} only after $\forall T_h$ from which it read have committed. 
+\item \textbf{RC}: $S$ recoverable $\triangleq \forall T_i$ \unibox{\textbf{commits}} only after $\forall T_h$ from which it read have committed.
 $$
 \forall T_h, T_h \Ra_s T_i \ra C_h <_S C_i
 $$
-\item \textbf{ACR}: $S$ avoids cascading rollback $\triangleq \forall T_i$ \unibox{\textbf{reads}} only those values written by committed $T_h$. 
+\item \textbf{ACR}: $S$ avoids cascading rollback $\triangleq \forall T_i$ \unibox{\textbf{reads}} only those values written by committed $T_h$.
 $$
 \forall T_h, T_h \Ra_s^{\text{read} A} T_i \ra C_h <_S r_i (A)
 $$
@@ -1146,8 +1146,8 @@ $$
 $$
 \end{enumerate}
 
-The smaller, the more stringent. 
- 
+The smaller, the more stringent.
+
 \begin{figure}[H]
 \centering
 \subfloat{\includegraphics[scale=0.8]{img/FRCCDiagram}}
@@ -1163,11 +1163,11 @@ Connection with 2PL:
 \end{figure}
 By convention serial $\ra$ 2PL
 
-Strict 2PL: $\forall X, c_i <_S u_i(X)$. 
+Strict 2PL: $\forall X, c_i <_S u_i(X)$.
 
 \begin{align*}
 \text{serial} \ra \text{strict 2PL} \ra \text{strict} &\ra \text{2PL} \xrightarrow{\text{well-formed \& legal}}\text{conflict serializable}\\
-&\ra \text{ACR} 
+&\ra \text{ACR}
 \end{align*}
 \chapter{IVM, Incremental View Maintenance}
 \section{Views}
@@ -1182,12 +1182,12 @@ $$
 V = \mat{L} \underset{C}\bowtie \mat{R}
 $$
 
-, where $C$ is the common attribute. 
+, where $C$ is the common attribute.
 \begin{enumerate}
 \item Mediator-based join
 \begin{enumerate}
 \item Process: Ship to mediator
-\item Issues: large traffic 
+\item Issues: large traffic
 \end{enumerate}
 \item Parameterized join
 \begin{enumerate}
@@ -1207,9 +1207,9 @@ left = eval $Q_{\mat{L}}$
 ship left to $\mat{R}$
 return left $\bowtie \mat{R}$ at $\mat{R}$
 \end{pseudo}
-\item Issue: traffic 
+\item Issue: traffic
 \end{enumerate}
-\item Semijoin reduction join 
+\item Semijoin reduction join
 \begin{enumerate}
 \item Process:
 \begin{pseudo}
@@ -1222,7 +1222,7 @@ return semijoin $\bowtie \mat{R}$ at $\mat{R}$
 \end{enumerate}
 \section{IVM}
 \subsection{Capturing}
-Capturing IVM as computation of $\Delta V^+, \Delta V^-$. 
+Capturing IVM as computation of $\Delta V^+, \Delta V^-$.
 
 \subsubsection{$V$ with $\gamma$ aggregation}
 \begin{itemize}
@@ -1264,7 +1264,7 @@ deferred version: $R$ means $R^1$, $S$ means $S^1$
 \Delta V^+ &= \sigma_c \Delta R^+\\
 \Delta V^- &= \sigma_c \Delta R^-
 \end{align*}
-\item Compositions of rules $V = T\bowtie \sigma_c W$: $\Delta V^+, \Delta V^-$ simple composition of above rules 
+\item Compositions of rules $V = T\bowtie \sigma_c W$: $\Delta V^+, \Delta V^-$ simple composition of above rules
 \end{itemize}
 eager version: $R$ means $R^0$, $S$ means $S^0$. Can derive eager version from deferred version:
 \begin{align*}
@@ -1278,11 +1278,10 @@ eager version: $R$ means $R^0$, $S$ means $S^0$. Can derive eager version from d
 \Pi_{G, H, G\#H\ra N, S}\ \gamma_{G, H; \text{SUM}(A) \ra S} R
 \end{align*}
 
-The problem, view $V_0$ in $f^+$ is not output of aggregation $\gamma$, but the output of projection $\Pi$. 
+The problem, view $V_0$ in $f^+$ is not output of aggregation $\gamma$, but the output of projection $\Pi$.
 
 \textbf{Cache intermediate view on subexpression}. The solution, create an intermediate view on $\gamma$, i.e. the cache of intermediate result.
 
 \textbf{Bottom up}. From updating caches to reaching the materialized view
-
 
 \end{document}
