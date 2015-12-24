@@ -5,6 +5,7 @@
 \usepackage{verbatim}
 \usepackage{tikz}
 \usetikzlibrary{shadows}
+
 \usepackage{enumitem}
 \setlist[itemize]{noitemsep, topsep=6pt}
 \setlist[enumerate]{noitemsep, topsep=6pt}
@@ -14,8 +15,6 @@
 \newcommand{\Ra}{\Rightarrow}
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\trieq}{\triangleq}
-
-% matrix
 \newcommand\mat[1]{\mathcal{#1}}
 
 % % after { to avoid extra space
@@ -57,4 +56,9 @@
 
 % itemize list tree; for single-line item
 \newcommand{\treelist}{\tikz[overlay]\draw(-.2,--.15)--(-.2,.6) [path fading=east](-.2,.15)--(.1,.15);}
+
 \newcommand{\treeitem}{\item[\treelist]}
+
+% integral
+\newcommand*\diff{\mathop{}\!\mathrm{d}}
+\newcommand*\Diff[1]{\mathop{}\!\mathrm{d^#1}}  % \Diff3\mathbf{y}
